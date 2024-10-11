@@ -1,0 +1,30 @@
+{
+  "name": "transaction-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "NODE_ENV=development nodemon --exec babel-node src/server.js --watch",
+    "clean": "rm -rf dist",
+    "build": "npm run clean && babel src -d dist --copy-files",
+    "start": "NODE_ENV=production node dist/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.0",
+    "md5": "^2.3.0",
+    "prisma": "^5.20.0",
+    "xendit-node": "^6.0.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.25.7",
+    "@babel/core": "^7.25.7",
+    "@babel/node": "^7.25.7",
+    "@babel/preset-env": "^7.25.7"
+  }
+}
