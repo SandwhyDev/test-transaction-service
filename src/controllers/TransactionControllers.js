@@ -3,11 +3,13 @@ import { CreateVaXendit, ReadAllVa, ReadVaById } from "../libs/xendit/VirtualAcc
 import { CreateEWalletXendit } from "../libs/xendit/HandleEwalletXendit";
 import { pr, SimulatePaymentMethod, SimulatePaymentRequest } from "../libs/xendit/xendit";
 import env from "dotenv";
+import { InvoiceModel } from "../models/model";
+import { GenerateDate } from "../libs/HandleGenerate";
 env.config();
 
 const TransactionXenditControllers = express.Router();
 
-const model = "models_prisma";
+const model = InvoiceModel;
 
 // create
 TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
@@ -235,32 +237,147 @@ TransactionXenditControllers.delete(`/transaction-delete/:id`, async (req, res) 
 });
 
 // CALLBACK URL PAYMENT METHODS
-TransactionXenditControllers.post("/xendit_payment_methods_callback", async (req, res) => {
+TransactionXenditControllers.post("/xendit_callback_fva_create", async (req, res) => {
   try {
     const header = await req.headers;
     const callback_token = header["x-callback-token"];
     const data = await req.body;
+    const date = await GenerateDate();
 
     const WEBHOOK_CALLBACK = "sjhKUaRs27cBB5rIFulcWzTedOi5RQufoHKiRgseeh82GFAw";
 
     if (callback_token === WEBHOOK_CALLBACK) {
-      // const updatepayload = await payloadModel.update({
-      //   where: {
-      //     id: id,
-      //   },
-      //   data: {
-      //     status: status,
-      //     amount: parseInt(amount),
-      //     description: description,
-      //     currency: currency,
-      //     created: created,
-      //     updated: updated,
-      //   },
-      // });
+      const create = await model.create({
+        data: {
+          status: "unpaid",
+          amount: data.amount,
+          description: description,
+          currency: currency,
+          created: date,
+          updated: date,
+        },
+      });
 
       res.status(200).json({
         status: true,
         message: "berhasil",
+        payload: data,
+      });
+    } else {
+      res.writeHead(403, { "Content-Type": "text/plain" });
+      res.end("Access denied");
+    }
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: error.message,
+    });
+  }
+});
+
+// CALLBACK URL PAYMENT REQUESTS SUCCEED
+TransactionXenditControllers.post("/xendit_callback_request_succeed", async (req, res) => {
+  try {
+    const header = await req.headers;
+    const callback_token = header["x-callback-token"];
+    const data = await req.body;
+    const date = await GenerateDate();
+
+    const WEBHOOK_CALLBACK = "sjhKUaRs27cBB5rIFulcWzTedOi5RQufoHKiRgseeh82GFAw";
+
+    if (callback_token === WEBHOOK_CALLBACK) {
+      const create = await model.create({
+        data: {
+          status: "unpaid",
+          amount: data.amount,
+          description: description,
+          currency: currency,
+          created: date,
+          updated: date,
+        },
+      });
+
+      res.status(200).json({
+        status: true,
+        message: "payment request succeed",
+        payload: data,
+      });
+    } else {
+      res.writeHead(403, { "Content-Type": "text/plain" });
+      res.end("Access denied");
+    }
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: error.message,
+    });
+  }
+});
+
+// CALLBACK URL PAYMENT REQUESTS FAILED
+TransactionXenditControllers.post("/xendit_callback_request_failed", async (req, res) => {
+  try {
+    const header = await req.headers;
+    const callback_token = header["x-callback-token"];
+    const data = await req.body;
+    const date = await GenerateDate();
+
+    const WEBHOOK_CALLBACK = "sjhKUaRs27cBB5rIFulcWzTedOi5RQufoHKiRgseeh82GFAw";
+
+    if (callback_token === WEBHOOK_CALLBACK) {
+      const create = await model.create({
+        data: {
+          status: "unpaid",
+          amount: data.amount,
+          description: description,
+          currency: currency,
+          created: date,
+          updated: date,
+        },
+      });
+
+      res.status(200).json({
+        status: true,
+        message: "payment request failed",
+        payload: data,
+      });
+    } else {
+      res.writeHead(403, { "Content-Type": "text/plain" });
+      res.end("Access denied");
+    }
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: error.message,
+    });
+  }
+});
+
+// CALLBACK URL PAYMENT REQUESTS PENDING
+TransactionXenditControllers.post("/xendit_callback_request_pending", async (req, res) => {
+  try {
+    const header = await req.headers;
+    const callback_token = header["x-callback-token"];
+    const data = await req.body;
+    const date = await GenerateDate();
+
+    const WEBHOOK_CALLBACK = "sjhKUaRs27cBB5rIFulcWzTedOi5RQufoHKiRgseeh82GFAw";
+
+    if (callback_token === WEBHOOK_CALLBACK) {
+      const create = await model.create({
+        data: {
+          status: "unpaid",
+          amount: data.amount,
+          description: description,
+          currency: currency,
+          created: date,
+          updated: date,
+        },
+      });
+
+      res.status(200).json({
+        status: true,
+        message: "payment request pending",
         payload: data,
       });
     } else {
