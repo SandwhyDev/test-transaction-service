@@ -239,7 +239,7 @@ TransactionXenditControllers.post("/xendit_payment_methods_callback", async (req
   try {
     const header = await req.headers;
     const callback_token = header["x-callback-token"];
-    const datas = await req.body;
+    const data = await req.body;
 
     const WEBHOOK_CALLBACK = "sjhKUaRs27cBB5rIFulcWzTedOi5RQufoHKiRgseeh82GFAw";
 
