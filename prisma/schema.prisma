@@ -9,6 +9,45 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model invoice {
+  invoice_id           String          @id
+  user_name            String
+  store_name           String
+  status               payment_status?
+  total_belanja        BigInt?
+  total_tagihan        BigInt?
+  fees_paid_amount     Int?
+  payment_fee          Int?
+  payment_method       String?
+  description          String?         @db.Text
+  paid_at              DateTime?
+  shipping_information String?
+  expiry_date          DateTime?
+  created              Int
+  updated              Int
+
+  invoice_items invoice_items[]
+}
+
+model invoice_items {
+  id           Int     @id @default(autoincrement())
+  name         String
+  quantity     Int?
+  harga_satuan BigInt?
+  subtotal     BigInt
+  invoice_id   String
+
+  invoice invoice @relation(fields: [invoice_id], references: [invoice_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+enum payment_status {
+  unpaid
+  pending
+  paid
+  expired
+  refunded
 }

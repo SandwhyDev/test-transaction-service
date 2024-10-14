@@ -15,3 +15,8 @@ export const GenerateInvoiceID = () => {
 
   return invoiceID;
 };
+
+export const GenerateDate = () => {
+  const date = Math.floor(Date.now() / 1000);
+  return date;
+};

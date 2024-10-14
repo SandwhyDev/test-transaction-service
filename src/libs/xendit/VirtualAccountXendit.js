@@ -1,9 +1,13 @@
-import { GenerateInvoiceID } from "../HandleGenerate";
+import { InvoiceModel } from "../../models/model";
+import { GenerateDate, GenerateInvoiceID } from "../HandleGenerate";
 import { pm, pr } from "./xendit";
+
+const model = InvoiceModel;
 
 export const CreateVaXendit = async (channelCode, amount) => {
   try {
     const id = GenerateInvoiceID();
+    const date = await GenerateDate();
 
     const fixedAcc = await pr.createPaymentRequest({
       data: {
@@ -32,6 +36,18 @@ export const CreateVaXendit = async (channelCode, amount) => {
             type: "PHYSICAL_PRODUCT",
           },
         ],
+      },
+    });
+
+    const create = await model.create({
+      data: {
+        invoice_id: id,
+        status: "unpaid",
+        amount: fixedAcc.amount,
+        description: fixedAcc.description,
+        currency: fixedAcc.currency,
+        created: date,
+        updated: date,
       },
     });
 
