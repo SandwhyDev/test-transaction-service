@@ -286,16 +286,16 @@ TransactionXenditControllers.post("/xendit_callback_request_succeed", async (req
     const WEBHOOK_CALLBACK = "sjhKUaRs27cBB5rIFulcWzTedOi5RQufoHKiRgseeh82GFAw";
 
     if (callback_token === WEBHOOK_CALLBACK) {
-      const create = await model.create({
-        data: {
-          status: "unpaid",
-          amount: data.amount,
-          description: description,
-          currency: currency,
-          created: date,
-          updated: date,
-        },
-      });
+      // const create = await model.create({
+      //   data: {
+      //     status: "unpaid",
+      //     amount: data.amount,
+      //     description: description,
+      //     currency: currency,
+      //     created: date,
+      //     updated: date,
+      //   },
+      // });
 
       res.status(200).json({
         status: true,
@@ -325,16 +325,16 @@ TransactionXenditControllers.post("/xendit_callback_request_failed", async (req,
     const WEBHOOK_CALLBACK = "sjhKUaRs27cBB5rIFulcWzTedOi5RQufoHKiRgseeh82GFAw";
 
     if (callback_token === WEBHOOK_CALLBACK) {
-      const create = await model.create({
-        data: {
-          status: "unpaid",
-          amount: data.amount,
-          description: description,
-          currency: currency,
-          created: date,
-          updated: date,
-        },
-      });
+      // const create = await model.create({
+      //   data: {
+      //     status: "unpaid",
+      //     amount: data.amount,
+      //     description: description,
+      //     currency: currency,
+      //     created: date,
+      //     updated: date,
+      //   },
+      // });
 
       res.status(200).json({
         status: true,
@@ -364,16 +364,16 @@ TransactionXenditControllers.post("/xendit_callback_request_pending", async (req
     const WEBHOOK_CALLBACK = "sjhKUaRs27cBB5rIFulcWzTedOi5RQufoHKiRgseeh82GFAw";
 
     if (callback_token === WEBHOOK_CALLBACK) {
-      const create = await model.create({
-        data: {
-          status: "unpaid",
-          amount: data.amount,
-          description: description,
-          currency: currency,
-          created: date,
-          updated: date,
-        },
-      });
+      // const create = await model.create({
+      //   data: {
+      //     status: "unpaid",
+      //     amount: data.amount,
+      //     description: description,
+      //     currency: currency,
+      //     created: date,
+      //     updated: date,
+      //   },
+      // });
 
       res.status(200).json({
         status: true,
