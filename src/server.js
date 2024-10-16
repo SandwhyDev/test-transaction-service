@@ -3,6 +3,7 @@ import cors from "cors";
 import path from "path";
 import env from "dotenv";
 import TransactionXenditControllers from "./controllers/TransactionControllers";
+import ClientControllers from "./controllers/ClientControllers";
 
 env.config();
 
@@ -19,6 +20,7 @@ app.use(express.static(path.join(__dirname, "/public")));
 
 //ROUTES
 app.use("/api", TransactionXenditControllers);
+app.use("/api", ClientControllers);
 
 //LISTENER
 app.listen(PORT, "0.0.0.0", () => {

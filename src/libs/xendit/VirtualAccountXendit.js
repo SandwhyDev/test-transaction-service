@@ -4,15 +4,26 @@ import { pm, pr } from "./xendit";
 
 const model = InvoiceModel;
 
-export const CreateVaXendit = async (channelCode, amount) => {
+export const CreateVaXendit = async (channelCode, amount, items, shipping_cost) => {
   try {
-    const id = GenerateInvoiceID();
+    const id = await GenerateInvoiceID();
     const date = await GenerateDate();
+    const fee = 4400;
+
+    let total_tagihan = fee + shipping_cost;
+
+    for (const e of items) {
+      const total = e.unit_price * e.quantity;
+
+      e.total_price = total;
+
+      total_tagihan += total;
+    }
 
     const fixedAcc = await pr.createPaymentRequest({
       data: {
         currency: "IDR",
-        amount: amount,
+        amount: total_tagihan,
         paymentMethod: {
           type: "VIRTUAL_ACCOUNT",
           reusability: "MULTIPLE_USE",
@@ -25,17 +36,6 @@ export const CreateVaXendit = async (channelCode, amount) => {
             },
           },
         },
-        items: [
-          {
-            currency: "IDR",
-            referenceId: "PRD123",
-            category: "Ban",
-            name: "ban tubles",
-            price: 10000,
-            quantity: 1,
-            type: "PHYSICAL_PRODUCT",
-          },
-        ],
       },
     });
 
@@ -43,22 +43,34 @@ export const CreateVaXendit = async (channelCode, amount) => {
       data: {
         invoice_id: id,
         status: "unpaid",
-        amount: fixedAcc.amount,
+        total_bill: total_tagihan,
+        total_shopping: amount,
         description: fixedAcc.description,
-        currency: fixedAcc.currency,
+        store_name: "arn sports",
+        user_name: "sands",
+        payment_fee: 4400,
+        shipping_cost: shipping_cost,
+        payment_method: `VA-${channelCode}-${fixedAcc.paymentMethod.virtualAccount.channelProperties.virtualAccountNumber}`,
         created: date,
         updated: date,
+        invoice_items: {
+          createMany: {
+            data: items,
+          },
+        },
       },
     });
 
     return {
       status: true,
-      message: fixedAcc,
+      // message: fixedAcc,
     };
   } catch (e) {
+    console.log(e);
+
     return {
       status: false,
-      message: e,
+      message: e.message,
     };
   }
 };

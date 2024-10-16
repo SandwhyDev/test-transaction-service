@@ -13,20 +13,27 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model client {
+  uid        String @id @unique
+  name       String @unique
+  created_at Int
+  updated_at Int
+}
+
 model invoice {
-  invoice_id           String          @id
+  invoice_id           String          @id @unique
   user_name            String
   store_name           String
   status               payment_status?
-  total_belanja        BigInt?
-  total_tagihan        BigInt?
-  fees_paid_amount     Int?
+  total_shopping       BigInt?
+  total_bill           BigInt?
   payment_fee          Int?
   payment_method       String?
   description          String?         @db.Text
-  paid_at              DateTime?
-  shipping_information String?
-  expiry_date          DateTime?
+  paid_at              Int?
+  shipping_information String?         @db.Text
+  expiry_date          Int?
+  shipping_cost        Int
   created              Int
   updated              Int
 
@@ -34,14 +41,16 @@ model invoice {
 }
 
 model invoice_items {
-  id           Int     @id @default(autoincrement())
-  name         String
-  quantity     Int?
-  harga_satuan BigInt?
-  subtotal     BigInt
-  invoice_id   String
+  id          Int     @id @default(autoincrement())
+  invoice_id  String
+  name        String
+  category    String?
+  quantity    Int
+  unit_price  Int
+  total_price Int
+  weight      String
 
-  invoice invoice @relation(fields: [invoice_id], references: [invoice_id], onDelete: NoAction, onUpdate: NoAction)
+  invoice invoice @relation(fields: [invoice_id], references: [invoice_id], onDelete: Cascade)
 }
 
 enum payment_status {
