@@ -3,13 +3,11 @@ import { CreateVaXendit, ReadAllVa, ReadVaById } from "../libs/xendit/VirtualAcc
 import { CreateEWalletXendit } from "../libs/xendit/HandleEwalletXendit";
 import { pr, SimulatePaymentMethod, SimulatePaymentRequest } from "../libs/xendit/xendit";
 import env from "dotenv";
-import { InvoiceModel } from "../models/model";
 import { GenerateDate } from "../libs/HandleGenerate";
+import { FindClient } from "../libs/FindClient";
 env.config();
 
 const TransactionXenditControllers = express.Router();
-
-const model = InvoiceModel;
 
 // create
 TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
@@ -17,9 +15,21 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
     const data = await req.body;
     let create;
 
+    const FindClientName = await FindClient(data.client);
+
+    if (!FindClientName.success) {
+      res.status(404).json({
+        success: false,
+        message: FindClientName.message,
+      });
+
+      return;
+    }
+
     switch (data.type) {
       case "va":
-        create = await CreateVaXendit(data.channelCode, data.amount);
+        create = await CreateVaXendit(data.channel_code, data.amount, data.items, data.shipping_cost);
+
         break;
 
       case "ewallet":
@@ -194,12 +204,12 @@ TransactionXenditControllers.put(`/transaction-update`, async (req, res) => {
   try {
     const data = await req.body;
 
-    const update = await model.update({
-      where: {
-        id: +data.id,
-      },
-      data: data,
-    });
+    // const update = await model.update({
+    //   where: {
+    //     id: +data.id,
+    //   },
+    //   data: data,
+    // });
 
     res.status(200).json({
       success: true,
@@ -218,11 +228,11 @@ TransactionXenditControllers.delete(`/transaction-delete/:id`, async (req, res) 
   try {
     const { id } = await req.params;
 
-    const hapus = await model.delete({
-      where: {
-        id: +id,
-      },
-    });
+    // const hapus = await model.delete({
+    //   where: {
+    //     id: +id,
+    //   },
+    // });
 
     res.status(200).json({
       success: true,
@@ -237,7 +247,7 @@ TransactionXenditControllers.delete(`/transaction-delete/:id`, async (req, res) 
 });
 
 // CALLBACK URL PAYMENT METHODS
-TransactionXenditControllers.post("/xendit_callback_fva_create", async (req, res) => {
+TransactionXenditControllers.post("/xendit_payment_methods_callback", async (req, res) => {
   try {
     const header = await req.headers;
     const callback_token = header["x-callback-token"];
@@ -247,16 +257,16 @@ TransactionXenditControllers.post("/xendit_callback_fva_create", async (req, res
     const WEBHOOK_CALLBACK = "sjhKUaRs27cBB5rIFulcWzTedOi5RQufoHKiRgseeh82GFAw";
 
     if (callback_token === WEBHOOK_CALLBACK) {
-      const create = await model.create({
-        data: {
-          status: "unpaid",
-          amount: data.amount,
-          description: description,
-          currency: currency,
-          created: date,
-          updated: date,
-        },
-      });
+      // const create = await model.create({
+      //   data: {
+      //     status: "unpaid",
+      //     amount: data.amount,
+      //     description: description,
+      //     currency: currency,
+      //     created: date,
+      //     updated: date,
+      //   },
+      // });
 
       res.status(200).json({
         status: true,
