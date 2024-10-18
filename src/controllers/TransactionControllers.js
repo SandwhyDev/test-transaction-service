@@ -5,6 +5,10 @@ import { pr, SimulatePaymentMethod, SimulatePaymentRequest } from "../libs/xendi
 import env from "dotenv";
 import { GenerateDate } from "../libs/HandleGenerate";
 import { FindClient } from "../libs/FindClient";
+import { DirectPaymentIpaymu } from "../libs/ipaymu/VaPaymentIpaymu";
+import { InvoiceModel } from "../models/model";
+import { CreateInvoice } from "../libs/CreateInvoice";
+import { HandleTotalTagihan } from "../libs/HandleTotalTagihan";
 env.config();
 
 const TransactionXenditControllers = express.Router();
@@ -83,6 +87,98 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
   } catch (error) {
     console.log(error);
 
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+// create escrow
+TransactionXenditControllers.post(`/transaction-escrow-create`, async (req, res) => {
+  try {
+    const data = await req.body;
+
+    const FindClientName = await FindClient(data.client);
+
+    if (!FindClientName.success) {
+      res.status(404).json({
+        success: false,
+        message: FindClientName.message,
+      });
+      return;
+    }
+
+    // itung total keseluruhan
+    const total = await HandleTotalTagihan(data.items, data.shippingCost);
+
+    // request payment
+    const DataPayment = {
+      customerName: data.customerName,
+      phoneNumber: data.phoneNumber,
+      email: data.email,
+      amount: total.total_bill,
+      paymentMethod: data.paymentMethod,
+      paymentChannel: data.paymentChannel,
+    };
+
+    const create = await DirectPaymentIpaymu(DataPayment);
+
+    if (!String(create.status).startsWith("2")) {
+      res.status(create.status).json({
+        success: false,
+        message: create.message,
+      });
+      return;
+    }
+
+    var payment_code;
+    switch (data.paymentMethod) {
+      case "qris":
+        payment_code = create.data.QrImage;
+        break;
+
+      default:
+        payment_code = create.data.PaymentNo;
+        break;
+    }
+
+    // create invoice
+    const dataInvoice = {
+      unique_id: create.data.SessionId,
+      method: data.paymentMethod,
+      channel: data.paymentChannel,
+      amount: total.total_bill,
+      total_tagihan: total.total_shopping,
+      description: data?.description,
+      shippingCost: data.shipping_cost,
+      fee: total.fee,
+      storeName: data.storeName,
+      customerName: data.customerName,
+      payment_code: payment_code,
+      shippingCost: data.shippingCost,
+      shippingInformation: data.shippingInformation,
+      items: data.items,
+      merchant: "IPAYMU",
+      client_name: FindClientName.message.name,
+      expired: create.data.Expired,
+    };
+
+    const creataInvoice = await CreateInvoice(dataInvoice);
+    if (creataInvoice.status === 500) {
+      res.status(500).json({
+        success: false,
+        message: creataInvoice.message,
+      });
+      return;
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "berhasil",
+      data: create.data,
+    });
+  } catch (error) {
     res.status(500).json({
       success: false,
       error: error.message,
@@ -394,6 +490,50 @@ TransactionXenditControllers.post("/xendit_callback_request_pending", async (req
       res.writeHead(403, { "Content-Type": "text/plain" });
       res.end("Access denied");
     }
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      message: error.message,
+    });
+  }
+});
+
+// CALLBACK IPAYMU
+TransactionXenditControllers.post("/ipaymu-callback", async (req, res) => {
+  try {
+    const data = await req.body;
+    console.log(data);
+
+    if (data.status !== "berhasil") {
+      return res.status(500).json({
+        status: false,
+        message: "erorr",
+        payload: data,
+      });
+    }
+
+    var status;
+
+    switch (data.status_code) {
+      case "0":
+        status = "pending";
+        break;
+      case "1":
+        status = "berhasil";
+        break;
+      case "2":
+        status = "expired";
+        break;
+
+      default:
+        break;
+    }
+
+    res.status(200).json({
+      status: true,
+      message: "payment ipaymu",
+      payload: data,
+    });
   } catch (error) {
     res.status(500).json({
       status: false,

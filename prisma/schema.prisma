@@ -14,14 +14,18 @@ datasource db {
 }
 
 model client {
-  uid        String @id @unique
-  name       String @unique
+  uid        String    @id @unique
+  name       String    @unique
   created_at Int
   updated_at Int
+  invoice    invoice[]
 }
 
 model invoice {
-  invoice_id           String          @id @unique
+  unique_id            String          @id @unique
+  invoice_id           String          @unique
+  merchant_name        String
+  client_name          String
   user_name            String
   store_name           String
   status               payment_status?
@@ -37,6 +41,7 @@ model invoice {
   created              Int
   updated              Int
 
+  client        client          @relation(fields: [client_name], references: [name], onDelete: Cascade)
   invoice_items invoice_items[]
 }
 
