@@ -11,13 +11,13 @@ export const CreateInvoice = async (data) => {
     var payment_method;
     switch (data.method) {
       case "va":
-        payment_method = `VA-${data.channel.toUpperCase()}-${data.payment_code}`;
+        payment_method = `VA-${data.channel.toUpperCase()}`;
         break;
       case "qris":
-        payment_method = `QRIS-${data.payment_code}`;
+        payment_method = `QRIS`;
         break;
       case "cstore":
-        payment_method = `${data.channel.toUpperCase()}-${data.payment_code}`;
+        payment_method = `${data.channel.toUpperCase()}`;
         break;
 
       default:
@@ -29,14 +29,15 @@ export const CreateInvoice = async (data) => {
         unique_id: data.unique_id,
         invoice_id: id,
         status: "unpaid",
-        total_shopping: data.amount,
-        total_bill: data.total_tagihan,
+        total_shopping: data.total_tagihan,
+        total_bill: data.amount,
         description: data.description,
         shipping_cost: data.shippingCost,
         payment_fee: data.fee,
         store_name: data.storeName,
         user_name: data.customerName,
         payment_method: payment_method,
+        payment_code: data.payment_code,
         merchant_name: data.merchant,
         client_name: data.client_name,
         shipping_information: data.shippingInformation,

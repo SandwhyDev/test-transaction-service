@@ -1,14 +1,13 @@
 import express from "express";
 import { CreateVaXendit, ReadAllVa, ReadVaById } from "../libs/xendit/VirtualAccountXendit";
-import { CreateEWalletXendit } from "../libs/xendit/HandleEwalletXendit";
-import { pr, SimulatePaymentMethod, SimulatePaymentRequest } from "../libs/xendit/xendit";
+import { pr, SimulatePaymentMethod } from "../libs/xendit/xendit";
 import env from "dotenv";
 import { GenerateDate } from "../libs/HandleGenerate";
 import { FindClient } from "../libs/FindClient";
 import { DirectPaymentIpaymu } from "../libs/ipaymu/VaPaymentIpaymu";
-import { InvoiceModel } from "../models/model";
 import { CreateInvoice } from "../libs/CreateInvoice";
 import { HandleTotalTagihan } from "../libs/HandleTotalTagihan";
+import { InvoiceModel } from "../models/model";
 env.config();
 
 const TransactionXenditControllers = express.Router();
@@ -16,104 +15,88 @@ const TransactionXenditControllers = express.Router();
 // create
 TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
   try {
-    const data = await req.body;
-    let create;
+    const data = req.body;
+
+    if (data.paymentMethod !== "va") {
+      res.status(403).json({ success: false, message: "pembayaran hanya va" });
+    }
 
     const FindClientName = await FindClient(data.client);
-
     if (!FindClientName.success) {
-      res.status(404).json({
-        success: false,
-        message: FindClientName.message,
-      });
-
-      return;
+      return res.status(404).json({ success: false, message: FindClientName.message });
     }
 
-    switch (data.type) {
-      case "va":
-        create = await CreateVaXendit(data.channel_code, data.amount, data.items, data.shipping_cost);
+    // hitung total semua
+    const total = await HandleTotalTagihan(data.items, data.shippingCost, 5000);
+    let create, dataInvoice;
 
-        break;
+    if (data.paymentMethod === "va") {
+      // request pembayaran xendit
+      create = await CreateVaXendit(
+        data.paymentChannel,
+        total.total_bill,
+        data.items,
+        data.shippingCost,
+        data.customerName,
+        data.phoneNumber
+      );
 
-      case "ewallet":
-        create = await CreateEWalletXendit(data.channelCode);
-
-        const createRequest = await pr.createPaymentRequest({
-          data: {
-            currency: "IDR",
-            amount: 100000,
-            paymentMethodId: create.message.id,
-            customerId: create.message.customerId,
-            // referenceId: "e0bc317540017876e4ba437dc472a10e",
-            // paymentMethod: {
-            //   reusability: "MULTIPLE_USE",
-            //   type: "EWALLET",
-            //   ewallet: {
-            //     channelCode: "SHOPEEPAY",
-            //     channelProperties: {
-            //       mobileNumber: "081217333000",
-            //       successReturnUrl: "https://redirect.me/goodstuff",
-            //       failureReturnUrl: "https://redirect.me/badstuff",
-            //     },
-            //   },
-            // },
-            // shippingInformation: {
-            //   country: "ID",
-            // },
-            // initiator: "MERCHANT",
-            // captureMethod: "AUTOMATIC",
-          },
-        });
-        break;
-
-      default:
-        create = false;
-        break;
+      // setup untuk membuat invoice
+      if (create.status) {
+        dataInvoice = {
+          unique_id: create.message.referenceId,
+          method: data.paymentMethod,
+          channel: data.paymentChannel,
+          amount: total.total_bill,
+          total_tagihan: total.total_shopping,
+          description: data?.description,
+          shippingCost: data.shippingCost,
+          fee: total.fee,
+          storeName: data.storeName,
+          customerName: data.customerName,
+          payment_code: create.message.paymentMethod.virtualAccount.channelProperties.virtualAccountNumber,
+          shippingInformation: data.shippingInformation,
+          items: data.items,
+          merchant: "XENDIT",
+          client_name: FindClientName.message.name,
+          expired: create.message.paymentMethod.virtualAccount.channelProperties?.expiresAt1,
+        };
+      }
     }
 
-    if (!create.status) {
-      return res.status(500).json({
-        success: false,
-        message: create.message,
-      });
+    if (!create?.status) {
+      return res.status(500).json({ success: false, message: create.message });
     }
 
-    res.status(201).json({
-      success: true,
-      message: "berhasil",
-      data: create,
-    });
+    // buat invoice ke database
+    const createInvoice = await CreateInvoice(dataInvoice);
+    if (createInvoice.status === 500) {
+      return res.status(500).json({ success: false, message: createInvoice.message });
+    }
+
+    res.status(201).json({ success: true, message: "berhasil", data: create });
   } catch (error) {
     console.log(error);
-
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
 // create escrow
 TransactionXenditControllers.post(`/transaction-escrow-create`, async (req, res) => {
   try {
-    const data = await req.body;
+    const data = req.body;
 
-    const FindClientName = await FindClient(data.client);
-
-    if (!FindClientName.success) {
-      res.status(404).json({
-        success: false,
-        message: FindClientName.message,
-      });
-      return;
+    // Validasi client
+    const clientResult = await FindClient(data.client);
+    if (!clientResult.success) {
+      return res.status(404).json({ success: false, message: clientResult.message });
     }
 
-    // itung total keseluruhan
+    // Hitung total tagihan
     const total = await HandleTotalTagihan(data.items, data.shippingCost);
 
-    // request payment
-    const DataPayment = {
+    // Request pembayaran
+    const paymentData = {
       customerName: data.customerName,
       phoneNumber: data.phoneNumber,
       email: data.email,
@@ -121,68 +104,44 @@ TransactionXenditControllers.post(`/transaction-escrow-create`, async (req, res)
       paymentMethod: data.paymentMethod,
       paymentChannel: data.paymentChannel,
     };
+    const paymentResponse = await DirectPaymentIpaymu(paymentData);
 
-    const create = await DirectPaymentIpaymu(DataPayment);
-
-    if (!String(create.status).startsWith("2")) {
-      res.status(create.status).json({
-        success: false,
-        message: create.message,
-      });
-      return;
+    if (!String(paymentResponse.status).startsWith("2")) {
+      return res.status(paymentResponse.status).json({ success: false, message: paymentResponse.message });
     }
 
-    var payment_code;
-    switch (data.paymentMethod) {
-      case "qris":
-        payment_code = create.data.QrImage;
-        break;
+    // Tentukan kode pembayaran
+    const payment_code = data.paymentMethod === "qris" ? paymentResponse.data.QrImage : paymentResponse.data.PaymentNo;
 
-      default:
-        payment_code = create.data.PaymentNo;
-        break;
-    }
-
-    // create invoice
-    const dataInvoice = {
-      unique_id: create.data.SessionId,
+    // Buat invoice
+    const invoiceData = {
+      unique_id: paymentResponse.data.SessionId,
       method: data.paymentMethod,
       channel: data.paymentChannel,
-      amount: total.total_bill,
+      amount: paymentResponse.data.Total,
       total_tagihan: total.total_shopping,
-      description: data?.description,
-      shippingCost: data.shipping_cost,
-      fee: total.fee,
+      description: data.description,
+      shippingCost: data.shippingCost,
+      fee: paymentResponse.data.Fee,
       storeName: data.storeName,
       customerName: data.customerName,
-      payment_code: payment_code,
-      shippingCost: data.shippingCost,
+      payment_code,
       shippingInformation: data.shippingInformation,
       items: data.items,
       merchant: "IPAYMU",
-      client_name: FindClientName.message.name,
-      expired: create.data.Expired,
+      client_name: clientResult.message.name,
+      expired: paymentResponse.data.Expired,
     };
 
-    const creataInvoice = await CreateInvoice(dataInvoice);
-    if (creataInvoice.status === 500) {
-      res.status(500).json({
-        success: false,
-        message: creataInvoice.message,
-      });
-      return;
+    const invoiceResponse = await CreateInvoice(invoiceData);
+    if (invoiceResponse.status === 500) {
+      return res.status(500).json({ success: false, message: invoiceResponse.message });
     }
 
-    res.status(201).json({
-      success: true,
-      message: "berhasil",
-      data: create.data,
-    });
+    // Berhasil
+    res.status(201).json({ success: true, message: "berhasil", data: paymentResponse.data });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
@@ -392,13 +351,13 @@ TransactionXenditControllers.post("/xendit_callback_request_succeed", async (req
     const WEBHOOK_CALLBACK = "sjhKUaRs27cBB5rIFulcWzTedOi5RQufoHKiRgseeh82GFAw";
 
     if (callback_token === WEBHOOK_CALLBACK) {
-      // const create = await model.create({
+      // const update = await InvoiceModel.update({
+      //   where: {
+      //     unique_id: data.reference_id,
+      //   },
       //   data: {
-      //     status: "unpaid",
-      //     amount: data.amount,
-      //     description: description,
-      //     currency: currency,
-      //     created: date,
+      //     status: "paid",
+      //     paid_at: date,
       //     updated: date,
       //   },
       // });
@@ -502,15 +461,7 @@ TransactionXenditControllers.post("/xendit_callback_request_pending", async (req
 TransactionXenditControllers.post("/ipaymu-callback", async (req, res) => {
   try {
     const data = await req.body;
-    console.log(data);
-
-    if (data.status !== "berhasil") {
-      return res.status(500).json({
-        status: false,
-        message: "erorr",
-        payload: data,
-      });
-    }
+    const date = await GenerateDate();
 
     var status;
 
@@ -521,13 +472,24 @@ TransactionXenditControllers.post("/ipaymu-callback", async (req, res) => {
       case "1":
         status = "berhasil";
         break;
-      case "2":
+      case "-2":
         status = "expired";
         break;
 
       default:
         break;
     }
+
+    const update = await InvoiceModel.update({
+      where: {
+        unique_id: data.reference_id,
+      },
+      data: {
+        status: status,
+        ...(status_code === "1" ? { paid_at: date } : {}),
+        updated: date,
+      },
+    });
 
     res.status(200).json({
       status: true,

@@ -33,6 +33,7 @@ model invoice {
   total_bill           BigInt?
   payment_fee          Int?
   payment_method       String?
+  payment_code         String?
   description          String?         @db.Text
   paid_at              Int?
   shipping_information String?         @db.Text

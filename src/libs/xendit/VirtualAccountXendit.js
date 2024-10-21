@@ -1,37 +1,28 @@
+import md5 from "md5";
 import { InvoiceModel } from "../../models/model";
 import { GenerateDate, GenerateInvoiceID } from "../HandleGenerate";
 import { pm, pr } from "./xendit";
 
 const model = InvoiceModel;
 
-export const CreateVaXendit = async (channelCode, amount, items, shipping_cost) => {
+export const CreateVaXendit = async (channelCode, amount, items, shipping_cost, customerName, phoneNumber) => {
   try {
-    const id = await GenerateInvoiceID();
     const date = await GenerateDate();
-    const fee = 4400;
 
-    let total_tagihan = fee + shipping_cost;
-
-    for (const e of items) {
-      const total = e.unit_price * e.quantity;
-
-      e.total_price = total;
-
-      total_tagihan += total;
-    }
+    const ReferenceId = md5(`${customerName}-${phoneNumber}-${amount}-${date}`);
 
     const fixedAcc = await pr.createPaymentRequest({
       data: {
         currency: "IDR",
-        amount: total_tagihan,
+        amount: amount,
         paymentMethod: {
           type: "VIRTUAL_ACCOUNT",
           reusability: "MULTIPLE_USE",
-          referenceId: id,
+          referenceId: ReferenceId,
           virtualAccount: {
             channelCode: channelCode,
             channelProperties: {
-              customerName: "sandtuy",
+              customerName: customerName,
               ...(channelCode === "BRI" || channelCode === "MANDIRI" ? { suggestedAmount: amount } : {}),
             },
           },
@@ -39,31 +30,31 @@ export const CreateVaXendit = async (channelCode, amount, items, shipping_cost) 
       },
     });
 
-    const create = await model.create({
-      data: {
-        invoice_id: id,
-        status: "unpaid",
-        total_bill: total_tagihan,
-        total_shopping: amount,
-        description: fixedAcc.description,
-        store_name: "arn sports",
-        user_name: "sands",
-        payment_fee: 4400,
-        shipping_cost: shipping_cost,
-        payment_method: `VA-${channelCode}-${fixedAcc.paymentMethod.virtualAccount.channelProperties.virtualAccountNumber}`,
-        created: date,
-        updated: date,
-        invoice_items: {
-          createMany: {
-            data: items,
-          },
-        },
-      },
-    });
+    // const create = await model.create({
+    //   data: {
+    //     invoice_id: id,
+    //     status: "unpaid",
+    //     total_bill: total_tagihan,
+    //     total_shopping: amount,
+    //     description: fixedAcc.description,
+    //     store_name: "arn sports",
+    //     user_name: "sands",
+    //     payment_fee: 4400,
+    //     shipping_cost: shipping_cost,
+    //     payment_method: `VA-${channelCode}-${fixedAcc.paymentMethod.virtualAccount.channelProperties.virtualAccountNumber}`,
+    //     created: date,
+    //     updated: date,
+    //     invoice_items: {
+    //       createMany: {
+    //         data: items,
+    //       },
+    //     },
+    //   },
+    // });
 
     return {
       status: true,
-      // message: fixedAcc,
+      message: fixedAcc,
     };
   } catch (e) {
     console.log(e);

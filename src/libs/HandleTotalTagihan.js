@@ -1,6 +1,4 @@
-export const HandleTotalTagihan = async (items, shipping_cost) => {
-  const fee = 4400;
-
+export const HandleTotalTagihan = async (items, shipping_cost, fee = 0) => {
   let biaya_lain = fee + shipping_cost;
   let tagihan = 0;
 
