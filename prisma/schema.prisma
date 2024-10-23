@@ -65,4 +65,5 @@ enum payment_status {
   paid
   expired
   refunded
+  failed
 }

@@ -338,13 +338,13 @@ TransactionXenditControllers.post("/xendit_payment_methods_callback", async (req
     const WEBHOOK_CALLBACK = "sjhKUaRs27cBB5rIFulcWzTedOi5RQufoHKiRgseeh82GFAw";
 
     if (callback_token === WEBHOOK_CALLBACK) {
-      // const create = await model.create({
+      // const update = await InvoiceModel.update({
+      //   where: {
+      //     unique_id: data.data.reference_id,
+      //   },
       //   data: {
-      //     status: "unpaid",
-      //     amount: data.amount,
-      //     description: description,
-      //     currency: currency,
-      //     created: date,
+      //     status: "paid",
+      //     paid_at: date,
       //     updated: date,
       //   },
       // });
@@ -379,7 +379,7 @@ TransactionXenditControllers.post("/xendit_callback_request_succeed", async (req
     if (callback_token === WEBHOOK_CALLBACK) {
       // const update = await InvoiceModel.update({
       //   where: {
-      //     unique_id: data.reference_id,
+      //     unique_id: data.data.reference_id,
       //   },
       //   data: {
       //     status: "paid",
@@ -416,13 +416,12 @@ TransactionXenditControllers.post("/xendit_callback_request_failed", async (req,
     const WEBHOOK_CALLBACK = "sjhKUaRs27cBB5rIFulcWzTedOi5RQufoHKiRgseeh82GFAw";
 
     if (callback_token === WEBHOOK_CALLBACK) {
-      // const create = await model.create({
+      // const update = await InvoiceModel.update({
+      //   where: {
+      //     unique_id: data.data.reference_id,
+      //   },
       //   data: {
-      //     status: "unpaid",
-      //     amount: data.amount,
-      //     description: description,
-      //     currency: currency,
-      //     created: date,
+      //     status: "failed",
       //     updated: date,
       //   },
       // });
@@ -455,13 +454,12 @@ TransactionXenditControllers.post("/xendit_callback_request_pending", async (req
     const WEBHOOK_CALLBACK = "sjhKUaRs27cBB5rIFulcWzTedOi5RQufoHKiRgseeh82GFAw";
 
     if (callback_token === WEBHOOK_CALLBACK) {
-      // const create = await model.create({
+      // const update = await InvoiceModel.update({
+      //   where: {
+      //     unique_id: data.data.reference_id,
+      //   },
       //   data: {
-      //     status: "unpaid",
-      //     amount: data.amount,
-      //     description: description,
-      //     currency: currency,
-      //     created: date,
+      //     status: "pending",
       //     updated: date,
       //   },
       // });
