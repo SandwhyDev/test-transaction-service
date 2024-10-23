@@ -506,16 +506,16 @@ TransactionXenditControllers.post("/ipaymu-callback", async (req, res) => {
         break;
     }
 
-    const update = await InvoiceModel.update({
-      where: {
-        unique_id: data.reference_id,
-      },
-      data: {
-        status: status,
-        ...(data.status_code === "1" ? { paid_at: date } : {}),
-        updated: date,
-      },
-    });
+    // const update = await InvoiceModel.update({
+    //   where: {
+    //     unique_id: data.reference_id,
+    //   },
+    //   data: {
+    //     status: status,
+    //     ...(data.status_code === "1" ? { paid_at: date } : {}),
+    //     updated: date,
+    //   },
+    // });
 
     res.status(200).json({
       status: true,
