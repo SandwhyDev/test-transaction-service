@@ -22,10 +22,11 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
     }
 
     // Hitung total tagihan
-    const total = await HandleTotalTagihan(data.items, data.shippingCost, 5000);
     let dataInvoice, paymentResponse, payment_code, create;
 
     if (data.escrow) {
+      const total = await HandleTotalTagihan(data.items, data.shippingCost);
+
       // Pembayaran via IPAYMU
       paymentResponse = await DirectPaymentIpaymu({
         customerName: data.customerName,
@@ -60,6 +61,8 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
         expired: paymentResponse.data.Expired,
       };
     } else {
+      const total = await HandleTotalTagihan(data.items, data.shippingCost, 5000);
+
       // Pembayaran via XENDIT
       create = await CreateVaXendit(
         data.paymentChannel,

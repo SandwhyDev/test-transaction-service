@@ -4,6 +4,8 @@ import path from "path";
 import env from "dotenv";
 import TransactionXenditControllers from "./controllers/TransactionControllers";
 import ClientControllers from "./controllers/ClientControllers";
+import { ReadPaymentIpaymu } from "./libs/ipaymu/VaPaymentIpaymu";
+import IpaymuControllers from "./controllers/IpaymuControllers";
 
 env.config();
 
@@ -21,6 +23,7 @@ app.use(express.static(path.join(__dirname, "/public")));
 //ROUTES
 app.use("/api", TransactionXenditControllers);
 app.use("/api", ClientControllers);
+app.use("/api", IpaymuControllers);
 
 //LISTENER
 app.listen(PORT, "0.0.0.0", () => {

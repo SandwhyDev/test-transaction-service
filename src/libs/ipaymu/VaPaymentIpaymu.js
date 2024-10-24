@@ -95,3 +95,42 @@ export const DirectPaymentIpaymu = async (data) => {
     return { status: "error", success: false, message: error.message };
   }
 };
+
+export const ReadPaymentIpaymu = async (trans_id) => {
+  const url = "https://sandbox.ipaymu.com/api/v2/transaction"; // development mode
+  let body = {
+    transactionId: trans_id,
+    // account: va,
+  };
+
+  // Generate signature
+  const bodyEncrypt = CryptoJS.SHA256(JSON.stringify(body));
+  const stringToSign = `POST:${va}:${bodyEncrypt}:${apikey}`;
+  const signature = CryptoJS.enc.Hex.stringify(CryptoJS.HmacSHA256(stringToSign, apikey));
+
+  // Mengirim request
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        va,
+        signature,
+      },
+      body: JSON.stringify(body),
+    });
+
+    const responseJson = await response.json();
+
+    return {
+      status: responseJson.Status,
+      success: responseJson.Success,
+      message: responseJson.Message,
+      data: responseJson.Data,
+    };
+  } catch (error) {
+    console.error("Error:", error);
+    return { status: "error", success: false, message: error.message };
+  }
+};
