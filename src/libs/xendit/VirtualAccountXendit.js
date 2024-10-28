@@ -5,34 +5,50 @@ import { pm, pr } from "./xendit";
 
 const model = InvoiceModel;
 
-export const CreateVaXendit = async (channelCode, amount, items, shipping_cost, customerName, phoneNumber) => {
+export const CreateVaXendit = async (
+  invoice_id,
+  channelCode,
+  amount,
+  items,
+  shipping_cost,
+  customerName,
+  phoneNumber
+) => {
   try {
     const date = await GenerateDate();
-
+    const fee = 4400;
+    const total_shopping = amount;
     const ReferenceId = md5(`${customerName}-${phoneNumber}-${amount}-${date}`);
+
+    // Buat salinan amount yang ditambahkan fee
+    const totalAmount = amount + fee;
 
     const fixedAcc = await pr.createPaymentRequest({
       data: {
         currency: "IDR",
-        amount: amount,
+        amount: totalAmount,
+        referenceId: invoice_id,
         paymentMethod: {
           type: "VIRTUAL_ACCOUNT",
           reusability: "MULTIPLE_USE",
-          referenceId: ReferenceId,
           virtualAccount: {
             channelCode: channelCode,
             channelProperties: {
               customerName: customerName,
-              ...(channelCode === "BRI" || channelCode === "MANDIRI" ? { suggestedAmount: amount } : {}),
+              ...(channelCode === "BRI" || channelCode === "MANDIRI" ? { suggestedAmount: totalAmount } : {}),
             },
           },
         },
       },
     });
 
+    console.log(fixedAcc);
+
     return {
       status: true,
       message: fixedAcc,
+      total_shopping: total_shopping,
+      fee: fee,
     };
   } catch (e) {
     console.log(e);

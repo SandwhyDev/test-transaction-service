@@ -1,9 +1,9 @@
+import md5 from "md5";
 import { InvoiceModel } from "../models/model";
 import { GenerateDate, GenerateInvoiceID } from "./HandleGenerate";
 
 export const CreateInvoice = async (data) => {
   try {
-    const id = await GenerateInvoiceID();
     const date = await GenerateDate();
     const Expiredate = new Date(data.expired);
     const unixTimestampExpire = Math.floor(Expiredate.getTime() / 1000);
@@ -24,18 +24,23 @@ export const CreateInvoice = async (data) => {
         break;
     }
 
-    const create = await InvoiceModel.create({
-      data: {
-        unique_id: data.unique_id,
-        invoice_id: id,
+    const id = await md5(`${data.unique_id}-${data.total_bill}-${date}`);
+
+    const create = await InvoiceModel.upsert({
+      where: {
+        invoice_id: data.invoice_id,
+      },
+      create: {
+        unique_id: id,
+        invoice_id: data.unique_id,
         status: "unpaid",
-        total_shopping: data.total_tagihan,
-        total_bill: data.amount,
+        total_shopping: data.total_shopping,
+        total_bill: data.total_bill,
         description: data.description,
         shipping_cost: data.shippingCost,
         payment_fee: data.fee,
         store_name: data.storeName,
-        user_name: data.customerName,
+        customer_name: data.customerName,
         payment_method: payment_method,
         payment_code: data.payment_code,
         merchant_name: data.merchant,
@@ -44,11 +49,24 @@ export const CreateInvoice = async (data) => {
         created: date,
         updated: date,
         expiry_date: unixTimestampExpire,
-        invoice_items: {
-          createMany: {
-            data: data.items,
-          },
-        },
+      },
+      update: {
+        status: "unpaid",
+        total_shopping: data.total_shopping,
+        total_bill: data.total_bill,
+        description: data.description,
+        shipping_cost: data.shippingCost,
+        payment_fee: data.fee,
+        store_name: data.storeName,
+        customer_name: data.customerName,
+        payment_method: payment_method,
+        payment_code: data.payment_code,
+        merchant_name: data.merchant,
+        client_name: data.client_name,
+        shipping_information: data.shippingInformation,
+        created: date,
+        updated: date,
+        expiry_date: unixTimestampExpire,
       },
     });
 

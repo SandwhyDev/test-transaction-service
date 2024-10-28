@@ -17,6 +17,7 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
   try {
     const data = req.body;
     const FindClientName = await FindClient(data.client);
+
     if (!FindClientName.success) {
       return res.status(404).json({ success: false, message: FindClientName.message });
     }
@@ -25,16 +26,17 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
     let dataInvoice, paymentResponse, payment_code, create;
 
     if (data.escrow) {
-      const total = await HandleTotalTagihan(data.items, data.shippingCost);
+      // const total = await HandleTotalTagihan(data.items, data.shippingCost);
 
       // Pembayaran via IPAYMU
       paymentResponse = await DirectPaymentIpaymu({
         customerName: data.customerName,
         phoneNumber: data.phoneNumber,
         email: data.email,
-        amount: total.total_bill,
+        amount: data.total_bill,
         paymentMethod: data.paymentMethod,
         paymentChannel: data.paymentChannel,
+        referenceId: data.invoice_id,
       });
 
       if (!String(paymentResponse.status).startsWith("2")) {
@@ -46,8 +48,8 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
         unique_id: paymentResponse.data.SessionId,
         method: data.paymentMethod,
         channel: data.paymentChannel,
-        amount: paymentResponse.data.Total,
-        total_tagihan: total.total_shopping,
+        total_bill: paymentResponse.data.Total,
+        total_shopping: paymentResponse.data.SubTotal,
         description: data.description,
         shippingCost: data.shippingCost,
         fee: paymentResponse.data.Fee,
@@ -61,12 +63,11 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
         expired: paymentResponse.data.Expired,
       };
     } else {
-      const total = await HandleTotalTagihan(data.items, data.shippingCost, 5000);
-
       // Pembayaran via XENDIT
       create = await CreateVaXendit(
+        data.invoice_id,
         data.paymentChannel,
-        total.total_bill,
+        data.total_bill,
         data.items,
         data.shippingCost,
         data.customerName,
@@ -81,11 +82,11 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
         unique_id: create.message.referenceId,
         method: data.paymentMethod,
         channel: data.paymentChannel,
-        amount: total.total_bill,
-        total_tagihan: total.total_shopping,
+        total_bill: create.message.amount,
+        total_tagihan: create.total_shopping,
         description: data.description,
         shippingCost: data.shippingCost,
-        fee: total.fee,
+        fee: create.fee,
         storeName: data.storeName,
         customerName: data.customerName,
         payment_code: create.message.paymentMethod.virtualAccount.channelProperties.virtualAccountNumber,
@@ -97,11 +98,17 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
       };
     }
 
+    dataInvoice.invoice_id = data.invoice_id;
+
+    // console.log(dataInvoice);
+
     // Buat invoice ke database
     const createInvoice = await CreateInvoice(dataInvoice);
     if (createInvoice.status === 500) {
       return res.status(500).json({ success: false, message: createInvoice.message });
     }
+
+    // console.log(createInvoice);
 
     res.status(201).json({ success: true, message: "berhasil", data: dataInvoice });
   } catch (error) {
@@ -377,12 +384,12 @@ TransactionXenditControllers.post("/xendit_callback_request_succeed", async (req
     const data = await req.body;
     const date = await GenerateDate();
 
-    const WEBHOOK_CALLBACK = "sjhKUaRs27cBB5rIFulcWzTedOi5RQufoHKiRgseeh82GFAw";
+    const WEBHOOK_CALLBACK = process.env.WEBHOOK_CALLBACK;
 
     if (callback_token === WEBHOOK_CALLBACK) {
       // const update = await InvoiceModel.update({
       //   where: {
-      //     unique_id: data.data.reference_id,
+      //     unique_id: data.payload.data.reference_id,
       //   },
       //   data: {
       //     status: "paid",

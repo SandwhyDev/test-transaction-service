@@ -51,7 +51,7 @@ export const DirectPaymentIpaymu = async (data) => {
     amount: data.amount,
     comments: "Payment to Trumecs.com",
     notifyUrl: "https://test-transaction-production.up.railway.app/api/ipaymu-callback",
-    referenceId: ReferenceId,
+    referenceId: data.referenceId,
     escrow: true,
     feeDirection: "BUYER",
   };

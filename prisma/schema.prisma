@@ -26,7 +26,7 @@ model invoice {
   invoice_id           String          @unique
   merchant_name        String
   client_name          String
-  user_name            String
+  customer_name        String
   store_name           String
   status               payment_status?
   total_shopping       BigInt?
@@ -38,26 +38,25 @@ model invoice {
   paid_at              Int?
   shipping_information String?         @db.Text
   expiry_date          Int?
-  shipping_cost        Int
+  // shipping_cost        Int
   created              Int
   updated              Int
 
-  client        client          @relation(fields: [client_name], references: [name], onDelete: Cascade)
-  invoice_items invoice_items[]
+  client client @relation(fields: [client_name], references: [name], onDelete: Cascade)
 }
 
-model invoice_items {
-  id          Int     @id @default(autoincrement())
-  invoice_id  String
-  name        String
-  category    String?
-  quantity    Int
-  unit_price  Int
-  total_price Int
-  weight      String
+// model invoice_items {
+//   id          Int     @id @default(autoincrement())
+//   invoice_id  String
+//   name        String
+//   category    String?
+//   quantity    Int
+//   unit_price  Int
+//   total_price Int
+//   weight      String
 
-  invoice invoice @relation(fields: [invoice_id], references: [invoice_id], onDelete: Cascade)
-}
+//   invoice invoice @relation(fields: [invoice_id], references: [invoice_id], onDelete: Cascade)
+// }
 
 enum payment_status {
   unpaid

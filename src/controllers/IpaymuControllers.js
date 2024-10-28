@@ -52,6 +52,7 @@ IpaymuControllers.get(`/ipaymu-read/:uid?`, async (req, res) => {
     });
   }
 });
+
 // update
 IpaymuControllers.put(`/ipaymu-update`, async (req, res) => {
   try {
