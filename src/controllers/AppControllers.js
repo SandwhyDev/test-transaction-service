@@ -1,26 +1,19 @@
 import express from "express";
-import { ClientModel } from "../models/model";
-import { GenerateDate } from "../libs/HandleGenerate";
-import md5 from "md5";
-import HandleBigInt from "../libs/HandleBigInt";
+import { AppModel } from "../models/model";
 
-const ClientControllers = express.Router();
+const AppControllers = express.Router();
 
-const model = ClientModel;
+const model = AppModel;
 
 // create
-ClientControllers.post(`/client-create`, async (req, res) => {
+AppControllers.post(`/app-create`, async (req, res) => {
   try {
     const data = await req.body;
-    const date = await GenerateDate();
-    const uid = await md5(`${data.name}-${date}`);
 
     const create = await model.create({
       data: {
-        uid: uid,
         name: data.name,
-        created_at: date,
-        updated_at: date,
+        client_id: data.client_id,
       },
     });
 
@@ -37,19 +30,15 @@ ClientControllers.post(`/client-create`, async (req, res) => {
 });
 
 // read
-ClientControllers.get(`/client-read/:uid?`, async (req, res) => {
+AppControllers.get(`/app-read/:id?`, async (req, res) => {
   try {
-    const { uid } = await req.params;
+    const { id } = await req.params;
     var result;
 
-    if (uid) {
+    if (id) {
       const find = await model.findUnique({
         where: {
-          uid: uid,
-        },
-        include: {
-          app: true,
-          invoice: true,
+          id: id,
         },
       });
 
@@ -63,16 +52,9 @@ ClientControllers.get(`/client-read/:uid?`, async (req, res) => {
 
       result = find;
     } else {
-      const find = await model.findMany({
-        include: {
-          app: true,
-          invoice: true,
-        },
-      });
+      const find = await model.findMany();
       result = find;
     }
-
-    result = await HandleBigInt(result);
 
     res.status(200).json({
       success: true,
@@ -88,18 +70,14 @@ ClientControllers.get(`/client-read/:uid?`, async (req, res) => {
 });
 
 // update
-ClientControllers.put(`/client-update/:uid`, async (req, res) => {
+AppControllers.put(`/app-update/:id`, async (req, res) => {
   try {
-    const { uid } = await req.params;
+    const { id } = await req.params;
     const data = await req.body;
 
     const find = await model.findUnique({
       where: {
-        uid: uid,
-      },
-      include: {
-        app: true,
-        invoice: true,
+        id: id,
       },
     });
 
@@ -113,7 +91,7 @@ ClientControllers.put(`/client-update/:uid`, async (req, res) => {
 
     const update = await model.update({
       where: {
-        uid: uid,
+        id: id,
       },
       data: data,
     });
@@ -131,19 +109,33 @@ ClientControllers.put(`/client-update/:uid`, async (req, res) => {
 });
 
 // delete
-ClientControllers.delete(`/client-delete/:id`, async (req, res) => {
+AppControllers.delete(`/app-delete/:id`, async (req, res) => {
   try {
     const { id } = await req.params;
 
+    const find = await model.findUnique({
+      where: {
+        id: id,
+      },
+    });
+
+    if (!find) {
+      res.status(200).json({
+        success: false,
+        message: "data tidak ditemukan",
+      });
+      return;
+    }
+
     const hapus = await model.delete({
       where: {
-        uid: id,
+        id: +id,
       },
     });
 
     res.status(200).json({
       success: true,
-      message: "berhasil hapus",
+      message: "berhasil update",
     });
   } catch (error) {
     res.status(500).json({
@@ -153,4 +145,4 @@ ClientControllers.delete(`/client-delete/:id`, async (req, res) => {
   }
 });
 
-export default ClientControllers;
+export default AppControllers;

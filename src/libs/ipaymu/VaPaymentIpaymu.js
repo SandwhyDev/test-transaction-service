@@ -1,9 +1,15 @@
 import CryptoJS from "crypto-js";
 import md5 from "md5";
 import { GenerateDate } from "../HandleGenerate";
+import env from "dotenv";
+const envFile = process.env.NODE_ENV === "production" ? ".env.production" : ".env.development";
+
+env.config({
+  path: envFile,
+});
 
 // Konfigurasi iPaymu API
-const apikey = "SANDBOXC9A50301-29A2-4096-87BF-63D323715825";
+const apikey = process.env.IPAYMU_KEY;
 const va = "0000001217333000";
 const url = "https://sandbox.ipaymu.com/api/v2/payment/direct"; // development mode
 // const url = "https://my.ipaymu.com/api/v2/payment/direct"; // production mode
@@ -39,7 +45,7 @@ const url = "https://sandbox.ipaymu.com/api/v2/payment/direct"; // development m
  *     console.error(error);
  *   });
  */
-export const DirectPaymentIpaymu = async (data) => {
+export const DirectPaymentIpaymu = async (key, data) => {
   const date = await GenerateDate();
   const ReferenceId = md5(`${data.customerName}-${data.phoneNumber}-${data.amount}-${date}`);
 
@@ -67,7 +73,7 @@ export const DirectPaymentIpaymu = async (data) => {
 
   // Generate signature
   const bodyEncrypt = CryptoJS.SHA256(JSON.stringify(body));
-  const stringToSign = `POST:${va}:${bodyEncrypt}:${apikey}`;
+  const stringToSign = `POST:${va}:${bodyEncrypt}:${key}`;
   const signature = CryptoJS.enc.Hex.stringify(CryptoJS.HmacSHA256(stringToSign, apikey));
 
   // Mengirim request

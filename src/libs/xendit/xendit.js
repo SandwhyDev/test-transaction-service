@@ -1,6 +1,6 @@
 import Xendit from "xendit-node";
 import env from "dotenv";
-const envFile = process.env.XENDIT_KEY === "production" ? ".env.production" : ".env.development";
+const envFile = process.env.NODE_ENV === "production" ? ".env.production" : ".env.development";
 
 env.config({
   path: envFile,

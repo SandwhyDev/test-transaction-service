@@ -18,29 +18,40 @@ model client {
   name       String    @unique
   created_at Int
   updated_at Int
+  xendit_key String?
+  ipaymu_key String?
   invoice    invoice[]
+  app        app[]
+}
+
+model app {
+  id        Int    @id @default(autoincrement())
+  name      String @unique
+  client_id String
+
+  client client @relation(fields: [client_id], references: [uid], onDelete: Cascade)
 }
 
 model invoice {
-  unique_id            String          @id @unique
-  invoice_id           String          @unique
-  merchant_name        String
-  client_name          String
-  customer_name        String
-  store_name           String
-  status               payment_status?
-  total_shopping       BigInt?
-  total_bill           BigInt?
-  payment_fee          Int?
-  payment_method       String?
-  payment_code         String?
-  description          String?         @db.Text
-  paid_at              Int?
-  shipping_information String?         @db.Text
-  expiry_date          Int?
+  unique_id      String          @id @unique
+  invoice_id     String          @unique
+  merchant_name  String
+  client_name    String
+  customer_name  String
+  store_name     String
+  status         payment_status?
+  // total_shopping       BigInt?
+  total_bill     BigInt?
+  // payment_fee          Int?
+  payment_method String?
+  payment_code   String?
+  // description    String?         @db.Text
+  paid_at        Int?
+  // shipping_information String?         @db.Text
+  expiry_date    Int?
   // shipping_cost        Int
-  created              Int
-  updated              Int
+  created        Int
+  updated        Int
 
   client client @relation(fields: [client_name], references: [name], onDelete: Cascade)
 }

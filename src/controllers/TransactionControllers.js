@@ -8,7 +8,13 @@ import { DirectPaymentIpaymu } from "../libs/ipaymu/VaPaymentIpaymu";
 import { CreateInvoice } from "../libs/CreateInvoice";
 import { HandleTotalTagihan } from "../libs/HandleTotalTagihan";
 import { InvoiceModel } from "../models/model";
-env.config();
+import { HandleCallback, HandleCallbackClientTrumecs } from "../libs/CallbackClient";
+
+const envFile = process.env.NODE_ENV === "production" ? ".env.production" : ".env.development";
+
+env.config({
+  path: envFile,
+});
 
 const TransactionXenditControllers = express.Router();
 
@@ -28,12 +34,14 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
     if (data.escrow) {
       // const total = await HandleTotalTagihan(data.items, data.shippingCost);
 
+      const amount = data.total_shopping + data.shippingCost;
+
       // Pembayaran via IPAYMU
-      paymentResponse = await DirectPaymentIpaymu({
+      paymentResponse = await DirectPaymentIpaymu(FindClientName.message.ipaymu_key, {
         customerName: data.customerName,
         phoneNumber: data.phoneNumber,
         email: data.email,
-        amount: data.total_bill,
+        amount: amount,
         paymentMethod: data.paymentMethod,
         paymentChannel: data.paymentChannel,
         referenceId: data.invoice_id,
@@ -51,7 +59,7 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
         total_bill: paymentResponse.data.Total,
         total_shopping: paymentResponse.data.SubTotal,
         description: data.description,
-        shippingCost: data.shippingCost,
+        shipping_cost: data.shippingCost,
         fee: paymentResponse.data.Fee,
         storeName: data.storeName,
         customerName: data.customerName,
@@ -63,16 +71,18 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
         expired: paymentResponse.data.Expired,
       };
     } else {
+      const dataXendit = {
+        invoice_id: data.invoice_id,
+        paymentChannel: data.paymentChannel,
+        total_shopping: data.total_shopping,
+        items: data.items,
+        shippingCost: data.shippingCost,
+        customerName: data.customerName,
+        phoneNumber: data.phoneNumber,
+      };
+
       // Pembayaran via XENDIT
-      create = await CreateVaXendit(
-        data.invoice_id,
-        data.paymentChannel,
-        data.total_bill,
-        data.items,
-        data.shippingCost,
-        data.customerName,
-        data.phoneNumber
-      );
+      create = await CreateVaXendit(FindClientName.message.xendit_key, dataXendit);
 
       if (!create?.status) {
         return res.status(500).json({ success: false, message: create.message });
@@ -85,7 +95,7 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
         total_bill: create.message.amount,
         total_tagihan: create.total_shopping,
         description: data.description,
-        shippingCost: data.shippingCost,
+        shipping_cost: data.shippingCost,
         fee: create.fee,
         storeName: data.storeName,
         customerName: data.customerName,
@@ -100,15 +110,11 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
 
     dataInvoice.invoice_id = data.invoice_id;
 
-    // console.log(dataInvoice);
-
     // Buat invoice ke database
     const createInvoice = await CreateInvoice(dataInvoice);
     if (createInvoice.status === 500) {
       return res.status(500).json({ success: false, message: createInvoice.message });
     }
-
-    // console.log(createInvoice);
 
     res.status(201).json({ success: true, message: "berhasil", data: dataInvoice });
   } catch (error) {
@@ -383,20 +389,21 @@ TransactionXenditControllers.post("/xendit_callback_request_succeed", async (req
     const callback_token = header["x-callback-token"];
     const data = await req.body;
     const date = await GenerateDate();
+    var status;
 
     const WEBHOOK_CALLBACK = process.env.WEBHOOK_CALLBACK;
 
     if (callback_token === WEBHOOK_CALLBACK) {
-      // const update = await InvoiceModel.update({
-      //   where: {
-      //     unique_id: data.payload.data.reference_id,
-      //   },
-      //   data: {
-      //     status: "paid",
-      //     paid_at: date,
-      //     updated: date,
-      //   },
-      // });
+      status = "paid";
+
+      const sendClient = await HandleCallback(data.data.reference_id, status);
+
+      if (!sendClient.status) {
+        return res.status(500).json({
+          status: false,
+          message: sendClient.message,
+        });
+      }
 
       res.status(200).json({
         status: true,
@@ -504,7 +511,7 @@ TransactionXenditControllers.post("/ipaymu-callback", async (req, res) => {
         status = "pending";
         break;
       case "1":
-        status = "berhasil";
+        status = "paid";
         break;
       case "-2":
         status = "expired";
@@ -514,20 +521,19 @@ TransactionXenditControllers.post("/ipaymu-callback", async (req, res) => {
         break;
     }
 
-    // const update = await InvoiceModel.update({
-    //   where: {
-    //     unique_id: data.reference_id,
-    //   },
-    //   data: {
-    //     status: status,
-    //     ...(data.status_code === "1" ? { paid_at: date } : {}),
-    //     updated: date,
-    //   },
-    // });
+    const sendClient = await HandleCallback(data.reference_id, status);
+
+    if (!sendClient.status) {
+      return res.status(500).json({
+        status: false,
+        message: sendClient.message,
+      });
+    }
 
     res.status(200).json({
       status: true,
       message: "payment ipaymu",
+      client: sendClient.message,
       payload: data,
     });
   } catch (error) {

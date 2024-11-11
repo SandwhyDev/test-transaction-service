@@ -2,47 +2,52 @@ import md5 from "md5";
 import { InvoiceModel } from "../../models/model";
 import { GenerateDate, GenerateInvoiceID } from "../HandleGenerate";
 import { pm, pr } from "./xendit";
+import { calculateFee } from "../HandleFee";
+import Xendit from "xendit-node";
 
 const model = InvoiceModel;
 
-export const CreateVaXendit = async (
-  invoice_id,
-  channelCode,
-  amount,
-  items,
-  shipping_cost,
-  customerName,
-  phoneNumber
-) => {
+export const CreateVaXendit = async (signature, data) => {
   try {
-    const date = await GenerateDate();
-    const fee = 4400;
-    const total_shopping = amount;
-    const ReferenceId = md5(`${customerName}-${phoneNumber}-${amount}-${date}`);
+    // const date = await GenerateDate();
+    const total_shopping = data.amount;
+    // const expiresAt = new Date();
+    // expiresAt.setDate(expiresAt.getDate() + 1);
+    // const expiresAtISO = expiresAt.toISOString();
+    // console.log("expires_at:", expiresAtISO);
+
+    const fee = await calculateFee(data.amount, "va");
 
     // Buat salinan amount yang ditambahkan fee
-    const totalAmount = amount + fee;
+    const totalAmount = data.amount + data.shipping_cost + fee;
 
-    const fixedAcc = await pr.createPaymentRequest({
+    const request = new Xendit({
+      secretKey: signature,
+    }).PaymentRequest;
+
+    const fixedAcc = await request.createPaymentRequest({
       data: {
         currency: "IDR",
         amount: totalAmount,
-        referenceId: invoice_id,
+        referenceId: data.invoice_id,
         paymentMethod: {
           type: "VIRTUAL_ACCOUNT",
           reusability: "MULTIPLE_USE",
           virtualAccount: {
-            channelCode: channelCode,
+            channelCode: data.paymentChannel,
             channelProperties: {
-              customerName: customerName,
-              ...(channelCode === "BRI" || channelCode === "MANDIRI" ? { suggestedAmount: totalAmount } : {}),
+              // expiresAt: "2024-11-06T03:42:45.360833959Z",
+              customerName: data.customerName,
+              ...(data.paymentChannel === "BRI" || data.paymentChannel === "MANDIRI"
+                ? { suggestedAmount: totalAmount }
+                : {}),
             },
           },
         },
       },
     });
 
-    console.log(fixedAcc);
+    // console.log(fixedAcc);
 
     return {
       status: true,
@@ -51,11 +56,11 @@ export const CreateVaXendit = async (
       fee: fee,
     };
   } catch (e) {
-    console.log(e);
+    // console.log(e.response);5
 
     return {
       status: false,
-      message: e.message,
+      message: e.response,
     };
   }
 };
