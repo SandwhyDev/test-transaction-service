@@ -56,7 +56,7 @@ export const CreateVaXendit = async (signature, data) => {
       fee: fee,
     };
   } catch (e) {
-    // console.log(e.response);5
+    // console.log(e.response);
 
     return {
       status: false,

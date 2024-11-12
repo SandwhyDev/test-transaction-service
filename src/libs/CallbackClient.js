@@ -14,6 +14,7 @@ export const HandleCallback = async (invoice_id, status) => {
   // Cek apakah invoice ada di database
   const cekInvoice = await InvoiceModel.findUnique({
     where: { invoice_id },
+    include: { client: true },
   });
 
   // Jika invoice tidak ditemukan, kembalikan status gagal
@@ -24,20 +25,10 @@ export const HandleCallback = async (invoice_id, status) => {
     };
   }
 
-  // Update status invoice dan set `paid_at` jika statusnya "paid"
-  await InvoiceModel.update({
-    where: { unique_id: cekInvoice.unique_id },
-    data: {
-      status,
-      ...(status === "paid" && { paid_at: date }),
-      updated: date,
-    },
-  });
-
   let cekResponse;
 
   // Tentukan respons berdasarkan nama client
-  switch (cekInvoice.client_name) {
+  switch (cekInvoice.client.name) {
     case "trumecs":
       // Proses callback khusus untuk client "trumecs"
       const sendClient = await HandleCallbackClientTrumecs(invoice_id, status);
@@ -47,11 +38,11 @@ export const HandleCallback = async (invoice_id, status) => {
       };
       break;
 
-    case "chitchat":
-      // Respons untuk client "chitchat"
+    case "togu":
+      // Respons untuk client "togu"
       cekResponse = {
         status: true,
-        message: "chitchat",
+        message: "togu",
       };
       break;
 
@@ -63,6 +54,16 @@ export const HandleCallback = async (invoice_id, status) => {
       };
       break;
   }
+
+  // Update status invoice dan set `paid_at` jika statusnya "paid"
+  await InvoiceModel.update({
+    where: { unique_id: cekInvoice.unique_id },
+    data: {
+      status,
+      ...(status === "paid" && { paid_at: date }),
+      updated: date,
+    },
+  });
 
   return cekResponse;
 };

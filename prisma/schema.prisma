@@ -36,7 +36,7 @@ model invoice {
   unique_id      String          @id @unique
   invoice_id     String          @unique
   merchant_name  String
-  client_name    String
+  client_id      String
   customer_name  String
   store_name     String
   status         payment_status?
@@ -53,7 +53,7 @@ model invoice {
   created        Int
   updated        Int
 
-  client client @relation(fields: [client_name], references: [name], onDelete: Cascade)
+  client client @relation(fields: [client_id], references: [uid], onDelete: Cascade)
 }
 
 // model invoice_items {

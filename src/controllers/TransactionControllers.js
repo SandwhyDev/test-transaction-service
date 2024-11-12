@@ -9,6 +9,7 @@ import { CreateInvoice } from "../libs/CreateInvoice";
 import { HandleTotalTagihan } from "../libs/HandleTotalTagihan";
 import { InvoiceModel } from "../models/model";
 import { HandleCallback, HandleCallbackClientTrumecs } from "../libs/CallbackClient";
+import HandleBigInt from "../libs/HandleBigInt";
 
 const envFile = process.env.NODE_ENV === "production" ? ".env.production" : ".env.development";
 
@@ -67,7 +68,7 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
         shippingInformation: data.shippingInformation,
         items: data.items,
         merchant: "IPAYMU",
-        client_name: FindClientName.message.name,
+        // client_name: FindClientName.message.name,
         expired: paymentResponse.data.Expired,
       };
     } else {
@@ -103,12 +104,13 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
         shippingInformation: data.shippingInformation,
         items: data.items,
         merchant: "XENDIT",
-        client_name: FindClientName.message.name,
+        // client_name: FindClientName.message.name,
         // expired: create.message.paymentMethod.virtualAccount.channelProperties?.expiresAt,
       };
     }
 
     dataInvoice.invoice_id = data.invoice_id;
+    dataInvoice.client_id = FindClientName.message.uid;
 
     // Buat invoice ke database
     const createInvoice = await CreateInvoice(dataInvoice);
@@ -223,27 +225,34 @@ TransactionXenditControllers.get(`/transaction-read/:uid?`, async (req, res) => 
     var result;
 
     if (uid) {
-      const find = await ReadVaById(uid);
+      const find = await InvoiceModel.findUnique({
+        where: {
+          unique_id: uid,
+        },
+        include: {
+          client: true,
+        },
+      });
 
-      if (!find.status) {
+      if (!find) {
         return res.status(404).json({
           success: false,
           message: "data tidak ditemukan",
         });
       }
 
-      result = find.message;
+      result = find;
     } else {
-      const find = await ReadAllVa();
+      const find = await InvoiceModel.findMany({
+        include: {
+          client: true,
+        },
+      });
 
-      if (!find.status) {
-        return res.status(500).json({
-          success: false,
-          message: find.message,
-        });
-      }
-      result = find.message.data;
+      result = find;
     }
+
+    result = await HandleBigInt(result);
 
     res.status(200).json({
       success: true,

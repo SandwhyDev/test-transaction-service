@@ -45,7 +45,7 @@ export const CreateInvoice = async (data) => {
         payment_method: payment_method,
         payment_code: data.payment_code,
         merchant_name: data.merchant,
-        client_name: data.client_name,
+        client_id: data.client_id,
         created: date,
         updated: date,
         expiry_date: unixTimestampExpire,
