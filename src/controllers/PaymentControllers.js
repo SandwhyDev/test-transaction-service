@@ -1,35 +1,23 @@
 import express from "express";
-import { AppModel } from "../models/model";
+import { PaymentModel } from "../models/model";
 import md5 from "md5";
 
-const AppControllers = express.Router();
+const PaymentGatewayControllers = express.Router();
 
-const model = AppModel;
+const model = PaymentModel;
 
 // create
-AppControllers.post(`/app-create`, async (req, res) => {
+PaymentGatewayControllers.post(`/payment-client-create`, async (req, res) => {
   try {
     const data = await req.body;
 
-    const cekName = await model.findFirst({
-      where: {
-        name: data.name,
-      },
-    });
-
-    if (cekName) {
-      return res.status(403).json({
-        success: false,
-        message: "app sudah terdaftar",
-      });
-    }
-
-    const unique_id = await md5(`${data.name}-${data.client_id}`);
+    const unique_id = await md5(`${data.name}-${data.signature}-${data.client_id}`);
 
     const create = await model.create({
       data: {
         unique_id: unique_id,
         name: data.name,
+        signature: data.signature,
         client_id: data.client_id,
       },
     });
@@ -47,15 +35,15 @@ AppControllers.post(`/app-create`, async (req, res) => {
 });
 
 // read
-AppControllers.get(`/app-read/:id?`, async (req, res) => {
+PaymentGatewayControllers.get(`/payment-client-read/:uid?`, async (req, res) => {
   try {
-    const { id } = await req.params;
+    const { uid } = await req.params;
     var result;
 
-    if (id) {
+    if (uid) {
       const find = await model.findUnique({
         where: {
-          unique_id: id,
+          unique_id: uid,
         },
         include: {
           client: true,
@@ -94,28 +82,14 @@ AppControllers.get(`/app-read/:id?`, async (req, res) => {
 });
 
 // update
-AppControllers.put(`/app-update/:id`, async (req, res) => {
+PaymentGatewayControllers.put(`/payment-client-update/:uid`, async (req, res) => {
   try {
-    const { id } = await req.params;
+    const { uid } = await req.params;
     const data = await req.body;
-
-    const find = await model.findUnique({
-      where: {
-        unique_id: id,
-      },
-    });
-
-    if (!find) {
-      res.status(200).json({
-        success: false,
-        message: "data tidak ditemukan",
-      });
-      return;
-    }
 
     const update = await model.update({
       where: {
-        id: id,
+        unique_id: uid,
       },
       data: data,
     });
@@ -133,33 +107,19 @@ AppControllers.put(`/app-update/:id`, async (req, res) => {
 });
 
 // delete
-AppControllers.delete(`/app-delete/:id`, async (req, res) => {
+PaymentGatewayControllers.delete(`/payment-client-delete/:uid`, async (req, res) => {
   try {
-    const { id } = await req.params;
-
-    const find = await model.findUnique({
-      where: {
-        unique_id: id,
-      },
-    });
-
-    if (!find) {
-      res.status(200).json({
-        success: false,
-        message: "data tidak ditemukan",
-      });
-      return;
-    }
+    const { uid } = await req.params;
 
     const hapus = await model.delete({
       where: {
-        id: +id,
+        unique_id: uid,
       },
     });
 
     res.status(200).json({
       success: true,
-      message: "berhasil update",
+      message: "berhasil hapus",
     });
   } catch (error) {
     res.status(500).json({
@@ -169,4 +129,4 @@ AppControllers.delete(`/app-delete/:id`, async (req, res) => {
   }
 });
 
-export default AppControllers;
+export default PaymentGatewayControllers;

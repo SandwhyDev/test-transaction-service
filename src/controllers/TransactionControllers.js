@@ -1,6 +1,6 @@
 import express from "express";
 import { CreateVaXendit, ReadAllVa, ReadVaById } from "../libs/xendit/VirtualAccountXendit";
-import { pr, SimulatePaymentMethod } from "../libs/xendit/xendit";
+// import { pr, SimulatePaymentMethod } from "../libs/xendit/xendit";
 import env from "dotenv";
 import { GenerateDate } from "../libs/HandleGenerate";
 import { FindClient } from "../libs/FindClient";
@@ -10,6 +10,7 @@ import { HandleTotalTagihan } from "../libs/HandleTotalTagihan";
 import { InvoiceModel } from "../models/model";
 import { HandleCallback, HandleCallbackClientTrumecs } from "../libs/CallbackClient";
 import HandleBigInt from "../libs/HandleBigInt";
+import { handleEscrowPayment, handleNonEscrowPayment } from "../libs/HandlePayment";
 
 const envFile = process.env.NODE_ENV === "production" ? ".env.production" : ".env.development";
 
@@ -23,168 +24,39 @@ const TransactionXenditControllers = express.Router();
 TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
   try {
     const data = req.body;
-    const FindClientName = await FindClient(data.client);
+    const merchant = data.escrow ? "ipaymu" : "xendit";
+    const FindClientName = await FindClient(data.client, merchant);
 
     if (!FindClientName.success) {
       return res.status(404).json({ success: false, message: FindClientName.message });
     }
 
-    // Hitung total tagihan
-    let dataInvoice, paymentResponse, payment_code, create;
+    let dataInvoice = {
+      invoice_id: data.invoice_id,
+      client_id: FindClientName.message.client_id,
+      method: data.paymentMethod,
+      channel: data.paymentChannel,
+      description: data.description,
+      shipping_cost: data.shipping_cost,
+      storeName: data.storeName,
+      customerName: data.customerName,
+      shippingInformation: data.shippingInformation,
+      // items: data.items,
+    };
 
-    if (data.escrow) {
-      // const total = await HandleTotalTagihan(data.items, data.shippingCost);
-
-      const amount = data.total_shopping + data.shippingCost;
-
-      // Pembayaran via IPAYMU
-      paymentResponse = await DirectPaymentIpaymu(FindClientName.message.ipaymu_key, {
-        customerName: data.customerName,
-        phoneNumber: data.phoneNumber,
-        email: data.email,
-        amount: amount,
-        paymentMethod: data.paymentMethod,
-        paymentChannel: data.paymentChannel,
-        referenceId: data.invoice_id,
-      });
-
-      if (!String(paymentResponse.status).startsWith("2")) {
-        return res.status(paymentResponse.status).json({ success: false, message: paymentResponse.message });
-      }
-
-      payment_code = data.paymentMethod === "qris" ? paymentResponse.data.QrImage : paymentResponse.data.PaymentNo;
-      dataInvoice = {
-        unique_id: paymentResponse.data.SessionId,
-        method: data.paymentMethod,
-        channel: data.paymentChannel,
-        total_bill: paymentResponse.data.Total,
-        total_shopping: paymentResponse.data.SubTotal,
-        description: data.description,
-        shipping_cost: data.shippingCost,
-        fee: paymentResponse.data.Fee,
-        storeName: data.storeName,
-        customerName: data.customerName,
-        payment_code,
-        shippingInformation: data.shippingInformation,
-        items: data.items,
-        merchant: "IPAYMU",
-        // client_name: FindClientName.message.name,
-        expired: paymentResponse.data.Expired,
-      };
-    } else {
-      const dataXendit = {
-        invoice_id: data.invoice_id,
-        paymentChannel: data.paymentChannel,
-        total_shopping: data.total_shopping,
-        items: data.items,
-        shippingCost: data.shippingCost,
-        customerName: data.customerName,
-        phoneNumber: data.phoneNumber,
-      };
-
-      // Pembayaran via XENDIT
-      create = await CreateVaXendit(FindClientName.message.xendit_key, dataXendit);
-
-      if (!create?.status) {
-        return res.status(500).json({ success: false, message: create.message });
-      }
-
-      dataInvoice = {
-        unique_id: create.message.referenceId,
-        method: data.paymentMethod,
-        channel: data.paymentChannel,
-        total_bill: create.message.amount,
-        total_tagihan: create.total_shopping,
-        description: data.description,
-        shipping_cost: data.shippingCost,
-        fee: create.fee,
-        storeName: data.storeName,
-        customerName: data.customerName,
-        payment_code: create.message.paymentMethod.virtualAccount.channelProperties.virtualAccountNumber,
-        shippingInformation: data.shippingInformation,
-        items: data.items,
-        merchant: "XENDIT",
-        // client_name: FindClientName.message.name,
-        // expired: create.message.paymentMethod.virtualAccount.channelProperties?.expiresAt,
-      };
-    }
-
-    dataInvoice.invoice_id = data.invoice_id;
-    dataInvoice.client_id = FindClientName.message.uid;
+    const paymentResult = data.escrow
+      ? await handleEscrowPayment(FindClientName.message.signature, data, dataInvoice)
+      : await handleNonEscrowPayment(FindClientName.message.signature, data, dataInvoice);
 
     // Buat invoice ke database
-    const createInvoice = await CreateInvoice(dataInvoice);
+    const createInvoice = await CreateInvoice(paymentResult.invoiceData);
     if (createInvoice.status === 500) {
       return res.status(500).json({ success: false, message: createInvoice.message });
     }
 
-    res.status(201).json({ success: true, message: "berhasil", data: dataInvoice });
+    res.status(201).json({ success: true, message: "berhasil", data: paymentResult.invoiceData });
   } catch (error) {
     console.log(error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-// create escrow
-TransactionXenditControllers.post(`/transaction-escrow-create`, async (req, res) => {
-  try {
-    const data = req.body;
-
-    // Validasi client
-    const clientResult = await FindClient(data.client);
-    if (!clientResult.success) {
-      return res.status(404).json({ success: false, message: clientResult.message });
-    }
-
-    // Hitung total tagihan
-    const total = await HandleTotalTagihan(data.items, data.shippingCost);
-
-    // Request pembayaran
-    const paymentData = {
-      customerName: data.customerName,
-      phoneNumber: data.phoneNumber,
-      email: data.email,
-      amount: total.total_bill,
-      paymentMethod: data.paymentMethod,
-      paymentChannel: data.paymentChannel,
-    };
-    const paymentResponse = await DirectPaymentIpaymu(paymentData);
-
-    if (!String(paymentResponse.status).startsWith("2")) {
-      return res.status(paymentResponse.status).json({ success: false, message: paymentResponse.message });
-    }
-
-    // Tentukan kode pembayaran
-    const payment_code = data.paymentMethod === "qris" ? paymentResponse.data.QrImage : paymentResponse.data.PaymentNo;
-
-    // Buat invoice
-    const invoiceData = {
-      unique_id: paymentResponse.data.SessionId,
-      method: data.paymentMethod,
-      channel: data.paymentChannel,
-      amount: paymentResponse.data.Total,
-      total_tagihan: total.total_shopping,
-      description: data.description,
-      shippingCost: data.shippingCost,
-      fee: paymentResponse.data.Fee,
-      storeName: data.storeName,
-      customerName: data.customerName,
-      payment_code,
-      shippingInformation: data.shippingInformation,
-      items: data.items,
-      merchant: "IPAYMU",
-      client_name: clientResult.message.name,
-      expired: paymentResponse.data.Expired,
-    };
-
-    const invoiceResponse = await CreateInvoice(invoiceData);
-    if (invoiceResponse.status === 500) {
-      return res.status(500).json({ success: false, message: invoiceResponse.message });
-    }
-
-    // Berhasil
-    res.status(201).json({ success: true, message: "berhasil", data: paymentResponse.data });
-  } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 });

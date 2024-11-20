@@ -1,41 +1,28 @@
 import { AppModel, ClientModel } from "../models/model";
 
-export const FindClient = async (name) => {
+export const FindClient = async (AppName, merchant) => {
   try {
-    const findApp = await AppModel.findUnique({
+    // find app
+    const app = await AppModel.findUnique({ where: { name: AppName } });
+    if (!app) return { success: false, message: "app tidak terdaftar" };
+
+    // find client dan payment yang terdaftar
+    const client = await ClientModel.findUnique({
       where: {
-        name: name,
+        unique_id: app.client_id,
+        payment_gateway: { some: { name: merchant } },
       },
+      include: { payment_gateway: true },
     });
+    if (!client) return { success: false, message: `client tidak terdaftar pada merchant payment ${merchant}` };
 
-    if (!findApp) {
-      return {
-        success: false,
-        message: "app tidak terdaftar",
-      };
-    }
+    // find payment
+    const payment = client.payment_gateway.find((pg) => pg.name === merchant);
+    if (!payment) return { success: false, message: "merchant payment tidak ditemukan" };
 
-    const find = await ClientModel.findUnique({
-      where: {
-        uid: findApp.client_id,
-      },
-    });
-
-    if (!find) {
-      return {
-        success: false,
-        message: "client tidak ditemukan",
-      };
-    }
-
-    return {
-      success: true,
-      message: find,
-    };
+    return { success: true, message: { client_id: client.unique_id, signature: payment.signature } };
   } catch (error) {
-    return {
-      success: false,
-      message: error,
-    };
+    console.log(error);
+    return { success: false, message: error };
   }
 };

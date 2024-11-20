@@ -17,7 +17,7 @@ ClientControllers.post(`/client-create`, async (req, res) => {
 
     const create = await model.create({
       data: {
-        uid: uid,
+        unique_id: uid,
         name: data.name,
         created_at: date,
         updated_at: date,
@@ -45,10 +45,11 @@ ClientControllers.get(`/client-read/:uid?`, async (req, res) => {
     if (uid) {
       const find = await model.findUnique({
         where: {
-          uid: uid,
+          unique_id: uid,
         },
         include: {
           app: true,
+          payment_gateway: true,
           invoice: true,
         },
       });
@@ -67,6 +68,7 @@ ClientControllers.get(`/client-read/:uid?`, async (req, res) => {
         include: {
           app: true,
           invoice: true,
+          payment_gateway: true,
         },
       });
       result = find;
@@ -92,10 +94,11 @@ ClientControllers.put(`/client-update/:uid`, async (req, res) => {
   try {
     const { uid } = await req.params;
     const data = await req.body;
+    const date = await GenerateDate();
 
     const find = await model.findUnique({
       where: {
-        uid: uid,
+        unique_id: uid,
       },
       include: {
         app: true,
@@ -113,9 +116,12 @@ ClientControllers.put(`/client-update/:uid`, async (req, res) => {
 
     const update = await model.update({
       where: {
-        uid: uid,
+        unique_id: uid,
       },
-      data: data,
+      data: {
+        ...data,
+        updated_at: date,
+      },
     });
 
     res.status(200).json({
@@ -135,9 +141,27 @@ ClientControllers.delete(`/client-delete/:id`, async (req, res) => {
   try {
     const { id } = await req.params;
 
+    const find = await model.findUnique({
+      where: {
+        unique_id: uid,
+      },
+      include: {
+        app: true,
+        invoice: true,
+      },
+    });
+
+    if (!find) {
+      res.status(200).json({
+        success: false,
+        message: "data tidak ditemukan",
+      });
+      return;
+    }
+
     const hapus = await model.delete({
       where: {
-        uid: id,
+        unique_id: id,
       },
     });
 

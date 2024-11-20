@@ -10,7 +10,7 @@ env.config({
 
 // Konfigurasi iPaymu API
 const apikey = process.env.IPAYMU_KEY;
-const va = "0000001217333000";
+const va = process.env.IPAYMU_VA;
 const url = "https://sandbox.ipaymu.com/api/v2/payment/direct"; // development mode
 // const url = "https://my.ipaymu.com/api/v2/payment/direct"; // production mode
 

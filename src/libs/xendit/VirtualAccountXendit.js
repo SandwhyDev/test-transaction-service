@@ -1,29 +1,32 @@
 import md5 from "md5";
-import { InvoiceModel } from "../../models/model";
 import { GenerateDate, GenerateInvoiceID } from "../HandleGenerate";
 import { pm, pr } from "./xendit";
 import { calculateFee } from "../HandleFee";
 import Xendit from "xendit-node";
 
-const model = InvoiceModel;
-
 export const CreateVaXendit = async (signature, data) => {
   try {
     // const date = await GenerateDate();
-    const total_shopping = data.amount;
     // const expiresAt = new Date();
     // expiresAt.setDate(expiresAt.getDate() + 1);
     // const expiresAtISO = expiresAt.toISOString();
     // console.log("expires_at:", expiresAtISO);
 
-    const fee = await calculateFee(data.amount, "va");
+    const fee = await calculateFee(data.total_shopping, "va");
 
     // Buat salinan amount yang ditambahkan fee
-    const totalAmount = data.amount + data.shipping_cost + fee;
+    const totalAmount = data.total_shopping + data.shipping_cost + fee;
 
     const request = new Xendit({
       secretKey: signature,
     }).PaymentRequest;
+
+    if (!Number.isInteger(totalAmount)) {
+      return {
+        status: false,
+        message: "error di perhitungan",
+      };
+    }
 
     const fixedAcc = await request.createPaymentRequest({
       data: {
@@ -52,7 +55,7 @@ export const CreateVaXendit = async (signature, data) => {
     return {
       status: true,
       message: fixedAcc,
-      total_shopping: total_shopping,
+      total_shopping: data.total_shopping,
       fee: fee,
     };
   } catch (e) {

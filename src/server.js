@@ -7,6 +7,7 @@ import TransactionXenditControllers from "./controllers/TransactionControllers";
 import ClientControllers from "./controllers/ClientControllers";
 import IpaymuControllers from "./controllers/IpaymuControllers";
 import AppControllers from "./controllers/AppControllers";
+import PaymentGatewayControllers from "./controllers/PaymentControllers";
 
 const envFile = process.env.NODE_ENV === "production" ? ".env.production" : ".env.development";
 
@@ -28,6 +29,7 @@ app.use("/api", TransactionXenditControllers);
 app.use("/api", ClientControllers);
 app.use("/api", IpaymuControllers);
 app.use("/api", AppControllers);
+app.use("/api", PaymentGatewayControllers);
 
 // // Encrypt
 // var ciphertext = CryptoJS.AES.encrypt("my message", "secret key 123").toString();

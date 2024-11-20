@@ -14,22 +14,30 @@ datasource db {
 }
 
 model client {
-  uid        String    @id @unique
-  name       String    @unique
-  created_at Int
-  updated_at Int
-  xendit_key String?
-  ipaymu_key String?
-  invoice    invoice[]
-  app        app[]
+  unique_id       String            @id @unique
+  name            String            @unique
+  created_at      Int
+  updated_at      Int
+  invoice         invoice[]
+  app             app[]
+  payment_gateway payment_gateway[]
+}
+
+model payment_gateway {
+  unique_id String @id @unique
+  name      String @unique
+  signature String
+  client_id String
+
+  client client @relation(fields: [client_id], references: [unique_id], onDelete: Cascade)
 }
 
 model app {
-  id        Int    @id @default(autoincrement())
+  unique_id String @id @unique
   name      String @unique
   client_id String
 
-  client client @relation(fields: [client_id], references: [uid], onDelete: Cascade)
+  client client @relation(fields: [client_id], references: [unique_id], onDelete: Cascade)
 }
 
 model invoice {
@@ -53,7 +61,7 @@ model invoice {
   created        Int
   updated        Int
 
-  client client @relation(fields: [client_id], references: [uid], onDelete: Cascade)
+  client client @relation(fields: [client_id], references: [unique_id], onDelete: Cascade)
 }
 
 // model invoice_items {
@@ -64,7 +72,7 @@ model invoice {
 //   quantity    Int
 //   unit_price  Int
 //   total_price Int
-//   weight      String
+//   weight      int
 
 //   invoice invoice @relation(fields: [invoice_id], references: [invoice_id], onDelete: Cascade)
 // }
