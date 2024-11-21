@@ -7,10 +7,10 @@ import { FindClient } from "../libs/FindClient";
 import { DirectPaymentIpaymu } from "../libs/ipaymu/VaPaymentIpaymu";
 import { CreateInvoice } from "../libs/CreateInvoice";
 import { HandleItems, HandleTotalTagihan } from "../libs/HandleTotalTagihan";
-import { InvoiceModel } from "../models/model";
 import { HandleCallback, HandleCallbackClientTrumecs } from "../libs/CallbackClient";
 import HandleBigInt from "../libs/HandleBigInt";
 import { handleEscrowPayment, handleNonEscrowPayment } from "../libs/HandlePayment";
+import InvoiceModel from "../models/InvoiceModel";
 
 const envFile = process.env.NODE_ENV === "production" ? ".env.production" : ".env.development";
 
@@ -19,6 +19,8 @@ env.config({
 });
 
 const TransactionXenditControllers = express.Router();
+
+const model = InvoiceModel;
 
 // create
 TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
@@ -32,24 +34,6 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
     }
 
     const Tagihan = await HandleItems(data.items);
-
-    // let dataInvoice = {
-    //   invoice_id: data.invoice_id,
-    //   client_id: FindClientName.message.client_id,
-    //   total_shopping: Tagihan,
-    //   method: data.payment_method,
-    //   channel: data.payment_channel,
-    //   description: data.description,
-    //   shipping_cost: data.shipping_cost,
-    //   store_name: data.store_name,
-    //   customer_name: data.customer_name,
-    //   phone_number: data.phone_number,
-    //   email: data.email,
-    //   payment_method: data.payment_method,
-    //   payment_channel: data.payment_channel,
-    //   shipping_information: data.shipping_information,
-    //   items: data.items,
-    // };
 
     let dataInvoice = {
       ...data,
@@ -216,15 +200,28 @@ TransactionXenditControllers.delete(`/transaction-delete/:id`, async (req, res) 
   try {
     const { id } = await req.params;
 
-    // const hapus = await model.delete({
-    //   where: {
-    //     id: +id,
-    //   },
-    // });
+    const find = await model.findUnique({
+      where: {
+        unique_id: id,
+      },
+    });
+
+    if (!find) {
+      return res.status(404).json({
+        success: false,
+        message: "data tidak ditemukan",
+      });
+    }
+
+    const hapus = await model.delete({
+      where: {
+        unique_id: id,
+      },
+    });
 
     res.status(200).json({
       success: true,
-      message: "berhasil update",
+      message: "berhasil delete",
     });
   } catch (error) {
     res.status(500).json({
@@ -412,19 +409,19 @@ TransactionXenditControllers.post("/ipaymu-callback", async (req, res) => {
         break;
     }
 
-    const sendClient = await HandleCallback(data.reference_id, status);
+    // const sendClient = await HandleCallback(data.reference_id, status);
 
-    if (!sendClient.status) {
-      return res.status(500).json({
-        status: false,
-        message: sendClient.message,
-      });
-    }
+    // if (!sendClient.status) {
+    //   return res.status(500).json({
+    //     status: false,
+    //     message: sendClient.message,
+    //   });
+    // }
 
     res.status(200).json({
       status: true,
       message: "payment ipaymu",
-      client: sendClient.message,
+      // client: sendClient.message,
       payload: data,
     });
   } catch (error) {

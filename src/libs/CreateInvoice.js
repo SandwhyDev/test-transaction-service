@@ -1,6 +1,6 @@
 import md5 from "md5";
-import { InvoiceModel } from "../models/model";
 import { GenerateDate, GenerateInvoiceID } from "./HandleGenerate";
+import InvoiceModel from "../models/InvoiceModel";
 
 export const CreateInvoice = async (data) => {
   try {

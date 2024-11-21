@@ -50,8 +50,6 @@ export const CreateVaXendit = async (signature, data) => {
       },
     });
 
-    // console.log(fixedAcc);
-
     return {
       status: true,
       message: fixedAcc,
@@ -59,8 +57,6 @@ export const CreateVaXendit = async (signature, data) => {
       fee: fee,
     };
   } catch (e) {
-    // console.log(e.response);
-
     return {
       status: false,
       message: e.response,

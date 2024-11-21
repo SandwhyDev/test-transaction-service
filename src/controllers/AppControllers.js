@@ -1,6 +1,6 @@
 import express from "express";
-import { AppModel } from "../models/model";
 import md5 from "md5";
+import AppModel from "../models/AppModel";
 
 const AppControllers = express.Router();
 

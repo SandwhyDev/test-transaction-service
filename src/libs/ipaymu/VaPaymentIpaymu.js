@@ -97,7 +97,6 @@ export const DirectPaymentIpaymu = async (key, data) => {
       data: responseJson.Data,
     };
   } catch (error) {
-    console.error("Error:", error);
     return { status: "error", success: false, message: error.message };
   }
 };
@@ -136,7 +135,6 @@ export const ReadPaymentIpaymu = async (trans_id) => {
       data: responseJson.Data,
     };
   } catch (error) {
-    console.error("Error:", error);
     return { status: "error", success: false, message: error.message };
   }
 };

@@ -1,6 +1,6 @@
 import { response } from "express";
-import { InvoiceModel } from "../models/model";
 import { GenerateDate } from "./HandleGenerate";
+import InvoiceModel from "../models/InvoiceModel";
 
 /**
  * Handle callback untuk memperbarui status invoice berdasarkan client tertentu

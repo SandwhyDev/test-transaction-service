@@ -1,4 +1,5 @@
-import { AppModel, ClientModel } from "../models/model";
+import AppModel from "../models/AppModel";
+import ClientModel from "../models/ClientModel";
 
 export const FindClient = async (AppName, merchant) => {
   try {

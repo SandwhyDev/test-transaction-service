@@ -1,6 +1,6 @@
 import express from "express";
-import { PaymentModel } from "../models/model";
 import md5 from "md5";
+import PaymentModel from "../models/PaymentModel";
 
 const PaymentGatewayControllers = express.Router();
 

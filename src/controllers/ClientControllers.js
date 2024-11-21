@@ -1,8 +1,8 @@
 import express from "express";
-import { ClientModel } from "../models/model";
 import { GenerateDate } from "../libs/HandleGenerate";
 import md5 from "md5";
 import HandleBigInt from "../libs/HandleBigInt";
+import ClientModel from "../models/ClientModel";
 
 const ClientControllers = express.Router();
 
