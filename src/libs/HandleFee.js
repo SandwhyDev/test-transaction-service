@@ -50,7 +50,7 @@ export const calculateFee = (amount, method, bank = null) => {
       break;
 
     default:
-      console.log("Metode pembayaran tidak dikenali");
+      // console.log("Metode pembayaran tidak dikenali");
       return null;
   }
 

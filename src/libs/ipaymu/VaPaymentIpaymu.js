@@ -18,23 +18,23 @@ const url = "https://sandbox.ipaymu.com/api/v2/payment/direct"; // development m
  * Melakukan pembayaran langsung ke iPaymu
  *
  * @param {Object} data - Data yang diperlukan untuk melakukan pembayaran
- * @param {String} data.customerName - Nama pelanggan
- * @param {String} data.phoneNumber - Nomor telepon pelanggan
+ * @param {String} data.customer_name - Nama pelanggan
+ * @param {String} data.phone_number - Nomor telepon pelanggan
  * @param {String} data.email - Email pelanggan
  * @param {Number} data.amount - Jumlah pembayaran
- * @param {String} data.paymentMethod - Metode pembayaran (cc, qris, va, cstore)
- * @param {String} [data.paymentChannel] - Channel pembayaran (jika metode pembayaran menggunakan `va` atau `cstore`)
+ * @param {String} data.payment_method - Metode pembayaran (cc, qris, va, cstore)
+ * @param {String} [data.payment_channel] - Channel pembayaran (jika metode pembayaran menggunakan `va` atau `cstore`)
  *
  * @returns {Promise<Object>} Hasil dari proses pembayaran, termasuk status, success, dan pesan dari API.
  *
  * @example
  * const DataPayment = {
- *   customerName: "John Doe",
- *   phoneNumber: "08123456789",
+ *   customer_name: "John Doe",
+ *   phone_number: "08123456789",
  *   email: "johndoe@email.com",
  *   amount: 500000,
- *   paymentMethod: "va",
- *   paymentChannel: "bca"
+ *   payment_method: "va",
+ *   payment_channel: "bca"
  * };
  *
  * DirectPaymentIpaymu(DataPayment)
@@ -47,12 +47,12 @@ const url = "https://sandbox.ipaymu.com/api/v2/payment/direct"; // development m
  */
 export const DirectPaymentIpaymu = async (key, data) => {
   const date = await GenerateDate();
-  const ReferenceId = md5(`${data.customerName}-${data.phoneNumber}-${data.amount}-${date}`);
+  const ReferenceId = md5(`${data.customer_name}-${data.phone_number}-${data.amount}-${date}`);
 
   // Struktur body request
   let body = {
-    name: data.customerName,
-    phone: data.phoneNumber,
+    name: data.customer_name,
+    phone: data.phone_number,
     email: data.email,
     amount: data.amount,
     comments: "Payment to Trumecs.com",
@@ -63,12 +63,12 @@ export const DirectPaymentIpaymu = async (key, data) => {
   };
 
   // Menentukan metode pembayaran
-  if (data.paymentMethod === "va") {
-    body = { ...body, paymentMethod: "va", paymentChannel: data.paymentChannel };
-  } else if (["cc", "qris"].includes(data.paymentMethod)) {
-    body.paymentMethod = data.paymentMethod;
-  } else if (data.paymentMethod === "cstore") {
-    body = { ...body, paymentMethod: "cstore", paymentChannel: data.paymentChannel };
+  if (data.payment_method === "va") {
+    body = { ...body, paymentMethod: "va", paymentChannel: data.payment_channel };
+  } else if (["cc", "qris"].includes(data.payment_method)) {
+    body.paymentMethod = data.payment_method;
+  } else if (data.payment_method === "cstore") {
+    body = { ...body, paymentMethod: "cstore", paymentChannel: data.payment_channel };
   }
 
   // Generate signature

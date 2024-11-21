@@ -1,15 +1,15 @@
 import { DirectPaymentIpaymu } from "./ipaymu/VaPaymentIpaymu";
 import { CreateVaXendit } from "./xendit/VirtualAccountXendit";
 
-export const handleEscrowPayment = async (signature, data, commonInvoiceData) => {
+export const handleEscrowPayment = async (signature, data) => {
   const amount = data.total_shopping + data.shipping_cost;
   const paymentResponse = await DirectPaymentIpaymu(signature, {
-    customerName: data.customerName,
-    phoneNumber: data.phoneNumber,
+    customer_name: data.customer_name,
+    phone_number: data.phone_number,
     email: data.email,
     amount: amount,
-    paymentMethod: data.paymentMethod,
-    paymentChannel: data.paymentChannel,
+    payment_method: data.payment_method,
+    payment_channel: data.payment_channel,
     referenceId: data.invoice_id,
   });
 
@@ -17,9 +17,9 @@ export const handleEscrowPayment = async (signature, data, commonInvoiceData) =>
     throw new Error(paymentResponse.message);
   }
 
-  const payment_code = data.paymentMethod === "qris" ? paymentResponse.data.QrImage : paymentResponse.data.PaymentNo;
+  const payment_code = data.payment_method === "qris" ? paymentResponse.data.QrImage : paymentResponse.data.PaymentNo;
   const invoiceData = {
-    ...commonInvoiceData,
+    ...data,
     unique_id: paymentResponse.data.SessionId,
     total_bill: paymentResponse.data.Total,
     total_shopping: data.total_shopping,
@@ -32,15 +32,15 @@ export const handleEscrowPayment = async (signature, data, commonInvoiceData) =>
   return { invoiceData };
 };
 
-export const handleNonEscrowPayment = async (signature, data, commonInvoiceData, merchant = "XENDIT") => {
+export const handleNonEscrowPayment = async (signature, data, merchant = "XENDIT") => {
   const paymentResponse = await CreateVaXendit(signature, {
     invoice_id: data.invoice_id,
-    paymentChannel: data.paymentChannel,
+    payment_channel: data.payment_channel,
     total_shopping: data.total_shopping,
-    // items: data.items,
+    items: data.items,
     shipping_cost: data.shipping_cost,
-    customerName: data.customerName,
-    phoneNumber: data.phoneNumber,
+    customer_name: data.customer_name,
+    phone_number: data.phone_number,
   });
 
   if (!paymentResponse?.status) {
@@ -48,7 +48,7 @@ export const handleNonEscrowPayment = async (signature, data, commonInvoiceData,
   }
 
   const invoiceData = {
-    ...commonInvoiceData,
+    ...data,
     unique_id: paymentResponse.message.referenceId,
     total_bill: paymentResponse.message.amount,
     total_shopping: data.total_shopping,

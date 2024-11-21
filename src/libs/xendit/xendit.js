@@ -25,8 +25,6 @@ export const SimulatePaymentRequest = async (id) => {
       message: payment,
     };
   } catch (error) {
-    console.log(error);
-
     return {
       success: false,
       message: error,
@@ -43,15 +41,11 @@ export const SimulatePaymentMethod = async (id, amount) => {
       },
     });
 
-    console.log(payment);
-
     return {
       success: true,
       message: payment,
     };
   } catch (error) {
-    console.log(error);
-
     return {
       success: false,
       message: error,

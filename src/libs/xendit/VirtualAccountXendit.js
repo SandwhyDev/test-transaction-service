@@ -37,11 +37,11 @@ export const CreateVaXendit = async (signature, data) => {
           type: "VIRTUAL_ACCOUNT",
           reusability: "MULTIPLE_USE",
           virtualAccount: {
-            channelCode: data.paymentChannel,
+            channelCode: data.payment_channel,
             channelProperties: {
               // expiresAt: "2024-11-06T03:42:45.360833959Z",
-              customerName: data.customerName,
-              ...(data.paymentChannel === "BRI" || data.paymentChannel === "MANDIRI"
+              customerName: data.customer_name,
+              ...(data.payment_channel === "BRI" || data.payment_channel === "MANDIRI"
                 ? { suggestedAmount: totalAmount }
                 : {}),
             },
@@ -141,8 +141,6 @@ export const SimulateVa = async (id, amount) => {
       message: simulate,
     };
   } catch (error) {
-    console.log(error);
-
     return {
       status: false,
       message: error,

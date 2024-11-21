@@ -22,7 +22,6 @@ export const FindClient = async (AppName, merchant) => {
 
     return { success: true, message: { client_id: client.unique_id, signature: payment.signature } };
   } catch (error) {
-    console.log(error);
     return { success: false, message: error };
   }
 };

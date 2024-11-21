@@ -1,5 +1,4 @@
-export const HandleTotalTagihan = async (items, shipping_cost, fee = 0) => {
-  let biaya_lain = fee + shipping_cost;
+export const HandleItems = async (items) => {
   let tagihan = 0;
 
   for (const e of items) {
@@ -10,11 +9,5 @@ export const HandleTotalTagihan = async (items, shipping_cost, fee = 0) => {
     tagihan += total;
   }
 
-  const total = tagihan + biaya_lain;
-
-  return {
-    total_shopping: tagihan,
-    total_bill: total,
-    fee: fee,
-  };
+  return tagihan;
 };

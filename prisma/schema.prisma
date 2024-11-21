@@ -41,41 +41,43 @@ model app {
 }
 
 model invoice {
-  unique_id      String          @id @unique
-  invoice_id     String          @unique
-  merchant_name  String
-  client_id      String
-  customer_name  String
-  store_name     String
-  status         payment_status?
-  // total_shopping       BigInt?
-  total_bill     BigInt?
-  // payment_fee          Int?
-  payment_method String?
-  payment_code   String?
-  // description    String?         @db.Text
-  paid_at        Int?
-  // shipping_information String?         @db.Text
-  expiry_date    Int?
-  // shipping_cost        Int
-  created        Int
-  updated        Int
+  unique_id            String          @id @unique
+  invoice_id           String          @unique
+  merchant_name        String
+  client_id            String
+  customer_name        String
+  store_name           String
+  status               payment_status?
+  total_shopping       BigInt?
+  total_bill           BigInt?
+  payment_fee          Int?
+  payment_method       String?
+  payment_code         String?
+  description          String?         @db.Text
+  paid_at              Int?
+  shipping_information String?         @db.Text
+  expiry_date          Int?
+  shipping_cost        Int
+  created              Int
+  updated              Int
 
-  client client @relation(fields: [client_id], references: [unique_id], onDelete: Cascade)
+  client        client          @relation(fields: [client_id], references: [unique_id], onDelete: Cascade)
+  invoice_items invoice_items[]
 }
 
-// model invoice_items {
-//   id          Int     @id @default(autoincrement())
-//   invoice_id  String
-//   name        String
-//   category    String?
-//   quantity    Int
-//   unit_price  Int
-//   total_price Int
-//   weight      int
+model invoice_items {
+  id          Int     @id @default(autoincrement())
+  invoice_id  String
+  name        String
+  category    String?
+  quantity    Int
+  unit_price  Int
+  total_price Int
+  weight      String?
+  description String?
 
-//   invoice invoice @relation(fields: [invoice_id], references: [invoice_id], onDelete: Cascade)
-// }
+  invoice invoice @relation(fields: [invoice_id], references: [invoice_id], onDelete: Cascade)
+}
 
 enum payment_status {
   unpaid

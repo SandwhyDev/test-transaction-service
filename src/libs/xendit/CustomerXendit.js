@@ -1,12 +1,7 @@
 import md5 from "md5";
 import { c } from "./xendit";
 
-export const CreateCustomer = async (
-  givenNames,
-  email,
-  mobileNumber,
-  addresses
-) => {
+export const CreateCustomer = async (givenNames, email, mobileNumber, addresses) => {
   try {
     let customer;
     let uid = await md5(`${givenNames}-${email}-${mobileNumber}`);
@@ -50,7 +45,6 @@ export const CreateCustomer = async (
 
 export const ReadCustomer = async (id) => {
   try {
-    console.log(id);
     const customer = await c.getCustomer({
       id: id,
       apiVersion: "2020-10-31",

@@ -45,10 +45,10 @@ export const Ipaymu = async () => {
       .then((response) => response.json())
       .then((responseJson) => {
         // response
-        console.log("success ", responseJson);
+        // console.log("success ", responseJson);
       })
       .catch((error) => {
-        console.log("error ", error);
+        // console.log("error ", error);
       });
   } catch (error) {}
 };

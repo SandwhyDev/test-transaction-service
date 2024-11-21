@@ -6,7 +6,7 @@ import { GenerateDate } from "../libs/HandleGenerate";
 import { FindClient } from "../libs/FindClient";
 import { DirectPaymentIpaymu } from "../libs/ipaymu/VaPaymentIpaymu";
 import { CreateInvoice } from "../libs/CreateInvoice";
-import { HandleTotalTagihan } from "../libs/HandleTotalTagihan";
+import { HandleItems, HandleTotalTagihan } from "../libs/HandleTotalTagihan";
 import { InvoiceModel } from "../models/model";
 import { HandleCallback, HandleCallbackClientTrumecs } from "../libs/CallbackClient";
 import HandleBigInt from "../libs/HandleBigInt";
@@ -31,22 +31,35 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
       return res.status(404).json({ success: false, message: FindClientName.message });
     }
 
+    const Tagihan = await HandleItems(data.items);
+
+    // let dataInvoice = {
+    //   invoice_id: data.invoice_id,
+    //   client_id: FindClientName.message.client_id,
+    //   total_shopping: Tagihan,
+    //   method: data.payment_method,
+    //   channel: data.payment_channel,
+    //   description: data.description,
+    //   shipping_cost: data.shipping_cost,
+    //   store_name: data.store_name,
+    //   customer_name: data.customer_name,
+    //   phone_number: data.phone_number,
+    //   email: data.email,
+    //   payment_method: data.payment_method,
+    //   payment_channel: data.payment_channel,
+    //   shipping_information: data.shipping_information,
+    //   items: data.items,
+    // };
+
     let dataInvoice = {
-      invoice_id: data.invoice_id,
+      ...data,
       client_id: FindClientName.message.client_id,
-      method: data.paymentMethod,
-      channel: data.paymentChannel,
-      description: data.description,
-      shipping_cost: data.shipping_cost,
-      storeName: data.storeName,
-      customerName: data.customerName,
-      shippingInformation: data.shippingInformation,
-      // items: data.items,
+      total_shopping: Tagihan,
     };
 
     const paymentResult = data.escrow
-      ? await handleEscrowPayment(FindClientName.message.signature, data, dataInvoice)
-      : await handleNonEscrowPayment(FindClientName.message.signature, data, dataInvoice);
+      ? await handleEscrowPayment(FindClientName.message.signature, dataInvoice)
+      : await handleNonEscrowPayment(FindClientName.message.signature, dataInvoice);
 
     // Buat invoice ke database
     const createInvoice = await CreateInvoice(paymentResult.invoiceData);
@@ -56,7 +69,6 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
 
     res.status(201).json({ success: true, message: "berhasil", data: paymentResult.invoiceData });
   } catch (error) {
-    console.log(error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -74,8 +86,6 @@ TransactionXenditControllers.post(`/transaction-payment/:id`, async (req, res) =
         message: pay.message,
       });
     }
-
-    console.log(pay);
 
     res.status(201).json({
       success: true,

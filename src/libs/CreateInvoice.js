@@ -9,15 +9,15 @@ export const CreateInvoice = async (data) => {
     const unixTimestampExpire = Math.floor(Expiredate.getTime() / 1000);
 
     var payment_method;
-    switch (data.method) {
+    switch (data.payment_method) {
       case "va":
-        payment_method = `VA-${data.channel.toUpperCase()}`;
+        payment_method = `VA-${data.payment_channel.toUpperCase()}`;
         break;
       case "qris":
         payment_method = `QRIS`;
         break;
       case "cstore":
-        payment_method = `${data.channel.toUpperCase()}`;
+        payment_method = `${data.payment_channel.toUpperCase()}`;
         break;
 
       default:
@@ -34,14 +34,14 @@ export const CreateInvoice = async (data) => {
         unique_id: id,
         invoice_id: data.unique_id,
         status: "unpaid",
-        // total_shopping: data.total_shopping,
-        // description: data.description,
-        // shipping_cost: data.shipping_cost,
-        // payment_fee: data.fee,
-        // shipping_information: data.shippingInformation,
+        total_shopping: data.total_shopping,
+        description: data.description,
+        shipping_cost: data.shipping_cost,
+        payment_fee: data.fee,
+        shipping_information: data.shipping_information,
         total_bill: data.total_bill,
-        store_name: data.storeName,
-        customer_name: data.customerName,
+        store_name: data.store_name,
+        customer_name: data.customer_name,
         payment_method: payment_method,
         payment_code: data.payment_code,
         merchant_name: data.merchant,
@@ -49,17 +49,22 @@ export const CreateInvoice = async (data) => {
         created: date,
         updated: date,
         expiry_date: unixTimestampExpire,
+        invoice_items: {
+          createMany: {
+            data: data.items,
+          },
+        },
       },
       update: {
         status: "unpaid",
-        // total_shopping: data.total_shopping,
-        // description: data.description,
-        // shipping_cost: data.shipping_cost,
-        // payment_fee: data.fee,
-        // shipping_information: data.shippingInformation,
+        total_shopping: data.total_shopping,
+        description: data.description,
+        shipping_cost: data.shipping_cost,
+        payment_fee: data.fee,
+        shipping_information: data.shipping_information,
         total_bill: data.total_bill,
-        store_name: data.storeName,
-        customer_name: data.customerName,
+        store_name: data.store_name,
+        customer_name: data.customer_name,
         payment_method: payment_method,
         payment_code: data.payment_code,
         merchant_name: data.merchant,
