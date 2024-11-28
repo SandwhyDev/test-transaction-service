@@ -390,7 +390,7 @@ TransactionXenditControllers.post("/xendit_callback_request_pending", async (req
 TransactionXenditControllers.post("/ipaymu-callback", async (req, res) => {
   try {
     const data = await req.body;
-    const date = await GenerateDate();
+    // const date = await GenerateDate();
 
     var status;
 
@@ -409,34 +409,20 @@ TransactionXenditControllers.post("/ipaymu-callback", async (req, res) => {
         break;
     }
 
-    // const data = {
-    //   trx_id: 148222,
-    //   sid: "32",
-    //   sub_total: "230000",
-    //   total: "234000",
-    //   fee: "4000",
-    //   status_code: "1",
-    //   status: "berhasil",
-    //   va: "000098086293",
-    //   via: "va",
-    //   channel: "Mandiri",
-    //   reference_id: "32",
-    // };
+    const sendClient = await HandleCallback(data.reference_id, status);
 
-    // const sendClient = await HandleCallback(data.reference_id, status);
-
-    // if (!sendClient.status) {
-    //   return res.status(500).json({
-    //     status: false,
-    //     message: sendClient.message,
-    //   });
-    // }
+    if (!sendClient.status) {
+      return res.status(500).json({
+        status: false,
+        message: sendClient.message,
+      });
+    }
 
     res.status(200).json({
       status: true,
       message: "payment ipaymu",
       // client: sendClient.message,
-      payload: data,
+      payload: sendClient.message,
     });
   } catch (error) {
     res.status(500).json({
