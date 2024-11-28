@@ -2,14 +2,11 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import env from "dotenv";
-import CryptoJS from "crypto-js";
 import TransactionXenditControllers from "./controllers/TransactionControllers";
 import ClientControllers from "./controllers/ClientControllers";
 import IpaymuControllers from "./controllers/IpaymuControllers";
 import AppControllers from "./controllers/AppControllers";
 import PaymentGatewayControllers from "./controllers/PaymentControllers";
-import { Alien, Client, Martian } from "../test";
-
 const envFile = process.env.NODE_ENV === "production" ? ".env.production" : ".env.development";
 
 env.config({
@@ -31,24 +28,6 @@ app.use("/api", ClientControllers);
 app.use("/api", IpaymuControllers);
 app.use("/api", AppControllers);
 app.use("/api", PaymentGatewayControllers);
-
-// // Encrypt
-// var ciphertext = CryptoJS.AES.encrypt("my message", "secret key 123").toString();
-
-// // Decrypt
-// var bytes = CryptoJS.AES.decrypt(ciphertext, "secret key 123");
-// var originalText = bytes.toString(CryptoJS.enc.Utf8);
-
-// console.log(ciphertext);
-// console.log(bytes);
-// console.log(originalText); // 'my message'
-
-const martian = new Martian("asd", "suiiii", "merah");
-const martian1 = new Martian().metode4("sandy", "red", "suii");
-
-console.log(martian.Metode3());
-// console.log(martian.Metode4("saku"));
-console.log(martian1);
 
 //LISTENER
 app.listen(PORT, "0.0.0.0", () => {
