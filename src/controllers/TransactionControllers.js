@@ -51,7 +51,7 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
       return res.status(500).json({ success: false, message: createInvoice.message });
     }
 
-    res.status(201).json({ success: true, message: "berhasil", data: paymentResult.invoiceData });
+    res.status(201).json({ success: true, message: "berhasil", data: createInvoice.message });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
@@ -408,6 +408,20 @@ TransactionXenditControllers.post("/ipaymu-callback", async (req, res) => {
       default:
         break;
     }
+
+    // const data = {
+    //   trx_id: 148222,
+    //   sid: "32",
+    //   sub_total: "230000",
+    //   total: "234000",
+    //   fee: "4000",
+    //   status_code: "1",
+    //   status: "berhasil",
+    //   va: "000098086293",
+    //   via: "va",
+    //   channel: "Mandiri",
+    //   reference_id: "32",
+    // };
 
     // const sendClient = await HandleCallback(data.reference_id, status);
 

@@ -1,6 +1,7 @@
 import md5 from "md5";
 import { GenerateDate, GenerateInvoiceID } from "./HandleGenerate";
 import InvoiceModel from "../models/InvoiceModel";
+import HandleBigInt from "./HandleBigInt";
 
 export const CreateInvoice = async (data) => {
   try {
@@ -26,7 +27,7 @@ export const CreateInvoice = async (data) => {
 
     const id = await md5(`${data.unique_id}-${data.total_bill}-${date}`);
 
-    const create = await InvoiceModel.upsert({
+    let create = await InvoiceModel.upsert({
       where: {
         invoice_id: data.invoice_id,
       },
@@ -74,6 +75,8 @@ export const CreateInvoice = async (data) => {
         expiry_date: unixTimestampExpire,
       },
     });
+
+    create = await HandleBigInt(create);
 
     return {
       status: 201,

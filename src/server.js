@@ -8,7 +8,7 @@ import ClientControllers from "./controllers/ClientControllers";
 import IpaymuControllers from "./controllers/IpaymuControllers";
 import AppControllers from "./controllers/AppControllers";
 import PaymentGatewayControllers from "./controllers/PaymentControllers";
-import { HandleItems } from "./libs/HandleTotalTagihan";
+import { Alien, Client, Martian } from "../test";
 
 const envFile = process.env.NODE_ENV === "production" ? ".env.production" : ".env.development";
 
@@ -23,7 +23,7 @@ const PORT = process.env.PORT;
 app.use(cors());
 app.use(express.json({ limit: "100mb" }));
 app.use(express.urlencoded({ extended: false }));
-app.use(express.static(path.join(__dirname, "/public")));
+app.use(express.static(path.join(__dirname, "../public")));
 
 //ROUTES
 app.use("/api", TransactionXenditControllers);
@@ -42,6 +42,13 @@ app.use("/api", PaymentGatewayControllers);
 // console.log(ciphertext);
 // console.log(bytes);
 // console.log(originalText); // 'my message'
+
+const martian = new Martian("asd", "suiiii", "merah");
+const martian1 = new Martian().metode4("sandy", "red", "suii");
+
+console.log(martian.Metode3());
+// console.log(martian.Metode4("saku"));
+console.log(martian1);
 
 //LISTENER
 app.listen(PORT, "0.0.0.0", () => {
