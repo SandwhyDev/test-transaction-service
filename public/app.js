@@ -49,8 +49,6 @@ let selectedVA = null;
 function checkCurrentProtocol() {
   const protocol = window.location.protocol;
 
-  console.log(window.location.href);
-
   if (protocol === "https:") {
     return true;
   } else {
@@ -68,6 +66,8 @@ if (cekUrl) {
 
 async function loadInvoice() {
   if (invoice) {
+    console.log(window.location.href);
+
     loading.classList.remove("hidden");
     const data = JSON.parse(invoice);
     PaymentContainer.classList.add("hidden");
