@@ -15,12 +15,33 @@ ClientControllers.post(`/client-create`, async (req, res) => {
     const date = await GenerateDate();
     const uid = await md5(`${data.name}-${date}`);
 
+    data.payment_gateway = data.payment_gateway.filter(async (obj) => {
+      for (const [key, value] of Object.entries(obj)) {
+        if (value === "") {
+          delete obj[key];
+        } else {
+          obj.unique_id = await md5(`${data.name}-${key}-${value}`);
+          obj.name = key;
+          obj.signature = value;
+          delete obj[key];
+        }
+      }
+      return Object.keys(obj).length > 0; // Hanya pertahankan objek yang tidak kosong
+    });
+
+    console.log(data.payment_gateway);
+
     const create = await model.create({
       data: {
         unique_id: uid,
         name: data.name,
         created_at: date,
         updated_at: date,
+        payment_gateway: {
+          createMany: {
+            data: data.payment_gateway,
+          },
+        },
       },
     });
 
@@ -143,7 +164,7 @@ ClientControllers.delete(`/client-delete/:id`, async (req, res) => {
 
     const find = await model.findUnique({
       where: {
-        unique_id: uid,
+        unique_id: id,
       },
       include: {
         app: true,

@@ -25,7 +25,7 @@ model client {
 
 model payment_gateway {
   unique_id String @id @unique
-  name      String @unique
+  name      String
   signature String
   client_id String
 
