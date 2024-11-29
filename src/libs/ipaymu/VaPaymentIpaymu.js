@@ -46,8 +46,6 @@ const callback_url = process.env.CALLBACK_URL_IPAYMU;
  *   });
  */
 export const DirectPaymentIpaymu = async (key, data) => {
-  console.log(url);
-
   // Struktur body request
   let body = {
     name: data.customer_name,
