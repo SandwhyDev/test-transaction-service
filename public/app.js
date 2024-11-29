@@ -48,6 +48,9 @@ const total_amount_detail = document.getElementById("total_amount_detail");
 let selectedVA = null;
 function checkCurrentProtocol() {
   const protocol = window.location.protocol;
+
+  console.log(window.location.href);
+
   if (protocol === "https:") {
     return true;
   } else {
@@ -58,7 +61,7 @@ function checkCurrentProtocol() {
 const cekUrl = checkCurrentProtocol();
 let url;
 if (cekUrl) {
-  url = "https://payment.hundredapps.co";
+  url = window.location.href;
 } else {
   url = "http://192.168.1.228:3000";
 }
