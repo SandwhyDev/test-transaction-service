@@ -1,10 +1,7 @@
 import express from "express";
-import { CreateVaXendit, ReadAllVa, ReadVaById } from "../libs/xendit/VirtualAccountXendit";
-// import { pr, SimulatePaymentMethod } from "../libs/xendit/xendit";
 import env from "dotenv";
 import { GenerateDate } from "../libs/HandleGenerate";
 import { FindClient } from "../libs/FindClient";
-import { DirectPaymentIpaymu } from "../libs/ipaymu/VaPaymentIpaymu";
 import { CreateInvoice } from "../libs/CreateInvoice";
 import { HandleItems, HandleTotalTagihan } from "../libs/HandleTotalTagihan";
 import { HandleCallback, HandleCallbackClientTrumecs } from "../libs/CallbackClient";
