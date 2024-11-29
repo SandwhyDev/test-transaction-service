@@ -34,8 +34,8 @@ export const HandleCallback = async (invoice_id, status) => {
       // Proses callback khusus untuk client "trumecs"
       const sendClient = await HandleCallbackClientTrumecs(invoice_id, status);
       cekResponse = {
-        status: sendClient.success,
-        message: "trumecs",
+        status: true,
+        message: sendClient.message,
       };
       break;
 

@@ -413,6 +413,7 @@ TransactionXenditControllers.post("/ipaymu-callback", async (req, res) => {
       return res.status(500).json({
         status: false,
         message: sendClient.message,
+        data: sendClient.data,
       });
     }
 
@@ -420,6 +421,7 @@ TransactionXenditControllers.post("/ipaymu-callback", async (req, res) => {
       status: true,
       message: "payment ipaymu",
       // client: sendClient.message,
+      client: sendClient.message,
       payload: sendClient.data,
     });
   } catch (error) {
