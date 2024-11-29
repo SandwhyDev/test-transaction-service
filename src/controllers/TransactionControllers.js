@@ -38,6 +38,7 @@ TransactionXenditControllers.post(`/transaction-create`, async (req, res) => {
     let dataInvoice = {
       ...data,
       client_id: FindClientName.message.client_id,
+      client_name: FindClientName.message.client_name,
       total_shopping: Tagihan,
     };
 
@@ -422,7 +423,7 @@ TransactionXenditControllers.post("/ipaymu-callback", async (req, res) => {
       status: true,
       message: "payment ipaymu",
       // client: sendClient.message,
-      payload: sendClient.message,
+      payload: sendClient.data,
     });
   } catch (error) {
     res.status(500).json({

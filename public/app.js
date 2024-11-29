@@ -46,15 +46,32 @@ const expiry_date = document.getElementById("expiry_date");
 const total_amount_detail = document.getElementById("total_amount_detail");
 
 let selectedVA = null;
+function checkCurrentProtocol() {
+  const protocol = window.location.protocol;
+  if (protocol === "https:") {
+    return true;
+  } else {
+    return false;
+  }
+}
+
+const cekUrl = checkCurrentProtocol();
+let url;
+if (cekUrl) {
+  url = "https://payment.hundredapps.co";
+} else {
+  url = "http://192.168.1.228:3000";
+}
 
 async function loadInvoice() {
   if (invoice) {
+    loading.classList.remove("hidden");
     const data = JSON.parse(invoice);
     PaymentContainer.classList.add("hidden");
     InvoiceDetail.classList.remove("hidden");
 
     try {
-      const response = await fetch(`http://192.168.1.228:3000/api/transaction-read/${data.data.unique_id}`, {
+      const response = await fetch(`${url}/api/transaction-read/${data.data.unique_id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -62,6 +79,15 @@ async function loadInvoice() {
       });
 
       const responseData = await response.json();
+
+      loading.classList.add("hidden");
+
+      if (!responseData.success) {
+        window.localStorage.clear();
+        InvoiceDetail.classList.add("hidden");
+        PaymentContainer.classList.remove("hidden");
+      }
+
       const date = new Date(responseData.data.expiry_date * 1000); // Konversi ke milidetik
 
       // Ambil elemen tanggal, bulan, tahun, jam, menit, dan detik
@@ -80,6 +106,7 @@ async function loadInvoice() {
       detailEmail.textContent = data.data.email;
       detailShipping.textContent = data.data.shipping_information;
       va_number.textContent = data.data.payment_code;
+      invoice_id.textContent = data.data.invoice_id;
       total_amount_detail.textContent = "Rp" + responseData.data.total_bill.toLocaleString("id-ID");
 
       switch (data.data.payment_method.split("-")[1].toLowerCase()) {
@@ -113,7 +140,7 @@ async function loadInvoice() {
         detailStatus.classList.add("bg-red-500");
       }
     } catch (error) {
-      console.error("Error fetching transaction data:", error);
+      // console.error("Error fetching transaction data:", error);
     }
   }
 }
@@ -203,7 +230,7 @@ document.getElementById("pay-button").addEventListener("click", async (e) => {
     };
 
     try {
-      const response = await fetch(`http://192.168.1.228:3000/api/transaction-create`, {
+      const response = await fetch(`${url}/api/transaction-create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -220,7 +247,7 @@ document.getElementById("pay-button").addEventListener("click", async (e) => {
       }
 
       const result = await response.json();
-      console.log(result);
+      // console.log(result);
 
       window.localStorage.setItem("invoice", JSON.stringify(result));
       window.location.reload();

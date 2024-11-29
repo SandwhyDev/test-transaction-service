@@ -6,82 +6,67 @@ import HandleBigInt from "./HandleBigInt";
 export const CreateInvoice = async (data) => {
   try {
     const date = await GenerateDate();
-    const Expiredate = new Date(data.expired);
-    const unixTimestampExpire = Math.floor(Expiredate.getTime() / 1000);
+    const unixTimestampExpire = Math.floor(new Date(data.expired).getTime() / 1000);
 
-    var payment_method;
-    switch (data.payment_method) {
-      case "va":
-        payment_method = `VA-${data.payment_channel.toUpperCase()}`;
-        break;
-      case "qris":
-        payment_method = `QRIS`;
-        break;
-      case "cstore":
-        payment_method = `${data.payment_channel.toUpperCase()}`;
-        break;
-
-      default:
-        break;
-    }
+    const payment_method =
+      {
+        va: `VA-${data.payment_channel.toUpperCase()}`,
+        qris: `QRIS`,
+        cstore: data.payment_channel.toUpperCase(),
+      }[data.payment_method] || "";
 
     const id = await md5(`${data.unique_id}-${data.total_bill}-${date}`);
 
-    let create = await InvoiceModel.upsert({
-      where: {
-        invoice_id: data.invoice_id,
-      },
+    // const datenow = new Date();
+    // const formattedDate = [
+    //   datenow.getFullYear(),
+    //   (datenow.getMonth() + 1).toString().padStart(2, "0"),
+    //   datenow.getDate(),
+    // ].join("/");
+
+    // const invoice_id = `INV/TMP/${formattedDate}/${date}`;
+    const invoice_id = data.invoice_id;
+
+    const commonData = {
+      status: "unpaid",
+      total_shopping: data.total_shopping,
+      description: data.description,
+      shipping_cost: data.shipping_cost,
+      payment_fee: data.fee,
+      shipping_information: data.shipping_information,
+      total_bill: data.total_bill,
+      store_name: data.store_name,
+      customer_name: data.customer_name,
+      payment_method: payment_method,
+      payment_code: data.payment_code,
+      merchant_name: data.merchant,
+      updated: date,
+      expiry_date: unixTimestampExpire,
+    };
+
+    const create = await InvoiceModel.upsert({
+      where: { invoice_id },
       create: {
         unique_id: id,
-        invoice_id: data.unique_id,
-        status: "unpaid",
-        total_shopping: data.total_shopping,
-        description: data.description,
-        shipping_cost: data.shipping_cost,
-        payment_fee: data.fee,
-        shipping_information: data.shipping_information,
-        total_bill: data.total_bill,
-        store_name: data.store_name,
-        customer_name: data.customer_name,
-        payment_method: payment_method,
-        payment_code: data.payment_code,
-        merchant_name: data.merchant,
+        invoice_id,
         client_id: data.client_id,
-        created: date,
-        updated: date,
-        expiry_date: unixTimestampExpire,
         invoice_items: {
-          createMany: {
-            data: data.items,
-          },
+          createMany: { data: data.items },
         },
+        created: date,
+        ...commonData,
       },
       update: {
-        status: "unpaid",
-        total_shopping: data.total_shopping,
-        description: data.description,
-        shipping_cost: data.shipping_cost,
-        payment_fee: data.fee,
-        shipping_information: data.shipping_information,
-        total_bill: data.total_bill,
-        store_name: data.store_name,
-        customer_name: data.customer_name,
-        payment_method: payment_method,
-        payment_code: data.payment_code,
-        merchant_name: data.merchant,
-        client_name: data.client_name,
-        created: date,
-        updated: date,
-        expiry_date: unixTimestampExpire,
+        ...commonData,
       },
     });
 
-    create = await HandleBigInt(create);
+    const result = await HandleBigInt(create);
 
     return {
       status: 201,
       success: true,
-      message: create,
+      message: result,
     };
   } catch (error) {
     return {

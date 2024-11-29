@@ -21,7 +21,10 @@ export const FindClient = async (AppName, merchant) => {
     const payment = client.payment_gateway.find((pg) => pg.name === merchant);
     if (!payment) return { success: false, message: "merchant payment tidak ditemukan" };
 
-    return { success: true, message: { client_id: client.unique_id, signature: payment.signature } };
+    return {
+      success: true,
+      message: { client_id: client.unique_id, signature: payment.signature, client_name: client.name },
+    };
   } catch (error) {
     return { success: false, message: error };
   }

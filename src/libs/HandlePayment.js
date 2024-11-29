@@ -11,6 +11,7 @@ export const handleEscrowPayment = async (signature, data) => {
     payment_method: data.payment_method,
     payment_channel: data.payment_channel,
     referenceId: data.invoice_id,
+    comments: `${data.client_name}-${data.customer_name}-${amount}`,
   });
 
   if (!String(paymentResponse.status).startsWith("2")) {

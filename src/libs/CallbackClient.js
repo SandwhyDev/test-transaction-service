@@ -26,33 +26,35 @@ export const HandleCallback = async (invoice_id, status) => {
     };
   }
 
+  let cekResponse;
+
   // Tentukan respons berdasarkan nama client
-  // switch (cekInvoice.client.name) {
-  //   case "trumecs":
-  //     // Proses callback khusus untuk client "trumecs"
-  //     const sendClient = await HandleCallbackClientTrumecs(invoice_id, status);
-  //     cekResponse = {
-  //       status: sendClient.success,
-  //       message: "trumecs",
-  //     };
-  //     break;
+  switch (cekInvoice.client.name) {
+    case "trumecs":
+      // Proses callback khusus untuk client "trumecs"
+      const sendClient = await HandleCallbackClientTrumecs(invoice_id, status);
+      cekResponse = {
+        status: sendClient.success,
+        message: "trumecs",
+      };
+      break;
 
-  //   case "togu":
-  //     // Respons untuk client "togu"
-  //     cekResponse = {
-  //       status: true,
-  //       message: "togu",
-  //     };
-  //     break;
+    case "togu":
+      // Respons untuk client "togu"
+      cekResponse = {
+        status: true,
+        message: "togu",
+      };
+      break;
 
-  //   default:
-  //     // Respons jika client tidak diketahui
-  //     cekResponse = {
-  //       status: false,
-  //       message: "Client tidak diketahui",
-  //     };
-  //     break;
-  // }
+    default:
+      // Respons jika client tidak diketahui
+      cekResponse = {
+        status: false,
+        message: "Client tidak terdaftar",
+      };
+      break;
+  }
 
   // Update status invoice dan set `paid_at` jika statusnya "paid"
   let update = await InvoiceModel.update({
@@ -67,16 +69,16 @@ export const HandleCallback = async (invoice_id, status) => {
   if (!update) {
     return {
       status: false,
-      message: update,
+      message: cekResponse,
+      data: update,
     };
   }
 
   update = await HandleBigInt(update);
 
-  return {
-    status: true,
-    message: update,
-  };
+  cekResponse = { ...cekResponse, data: update };
+
+  return cekResponse;
 };
 
 /**

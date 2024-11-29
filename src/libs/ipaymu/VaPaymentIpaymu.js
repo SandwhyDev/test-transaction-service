@@ -11,8 +11,8 @@ env.config({
 // Konfigurasi iPaymu API
 const apikey = process.env.IPAYMU_KEY;
 const va = process.env.IPAYMU_VA;
-const url = "https://sandbox.ipaymu.com/api/v2/payment/direct"; // development mode
-// const url = "https://my.ipaymu.com/api/v2/payment/direct"; // production mode
+const url = process.env.URL_PAY_IPAYMU;
+const callback_url = process.env.CALLBACK_URL_IPAYMU;
 
 /**
  * Melakukan pembayaran langsung ke iPaymu
@@ -46,8 +46,7 @@ const url = "https://sandbox.ipaymu.com/api/v2/payment/direct"; // development m
  *   });
  */
 export const DirectPaymentIpaymu = async (key, data) => {
-  const date = await GenerateDate();
-  const ReferenceId = md5(`${data.customer_name}-${data.phone_number}-${data.amount}-${date}`);
+  console.log(url);
 
   // Struktur body request
   let body = {
@@ -55,8 +54,8 @@ export const DirectPaymentIpaymu = async (key, data) => {
     phone: data.phone_number,
     email: data.email,
     amount: data.amount,
-    comments: "Payment to Trumecs.com",
-    notifyUrl: "https://test-transaction-production.up.railway.app/api/ipaymu-callback",
+    comments: data.comments,
+    notifyUrl: callback_url,
     referenceId: data.referenceId,
     escrow: true,
     feeDirection: "BUYER",
