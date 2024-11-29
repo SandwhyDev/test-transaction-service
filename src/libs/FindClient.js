@@ -17,8 +17,10 @@ export const FindClient = async (AppName, merchant) => {
     });
     if (!client) return { success: false, message: `client tidak terdaftar pada merchant payment ${merchant}` };
 
+    console.log(client.payment_gateway);
+
     // find payment
-    const payment = client.payment_gateway.find((pg) => pg.name === merchant);
+    const payment = client.payment_gateway.find((pg) => pg.name.toLowerCase() === merchant.toLowerCase());
     if (!payment) return { success: false, message: "merchant payment tidak ditemukan" };
 
     return {

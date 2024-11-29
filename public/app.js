@@ -59,14 +59,14 @@ function checkCurrentProtocol() {
 const cekUrl = checkCurrentProtocol();
 let url;
 if (cekUrl) {
-  url = window.location.href;
+  url = window.location.origin;
 } else {
   url = "http://192.168.1.228:3000";
 }
 
 async function loadInvoice() {
   if (invoice) {
-    console.log(window.location.href);
+    console.log(window.location.origin);
 
     loading.classList.remove("hidden");
     const data = JSON.parse(invoice);
